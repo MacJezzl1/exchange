@@ -266,6 +266,7 @@ export interface AuditEvent {
   entity_id: UUID;
   ip_address: string;
   user_agent: string;
+  reason?: string;
   details: Record<string, unknown>;
   created_at: TimestampISO;
 }

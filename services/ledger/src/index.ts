@@ -1,3 +1,3 @@
-// Service: ledger
-export const SERVICE_NAME = 'ledger';
-console.log('[ledger] Service scaffold ready.');
+export * from './types';
+export * from './journal';
+export * from './service';
