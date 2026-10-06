@@ -94,11 +94,15 @@ export class LedgerService {
 
       // In banking/exchange accounting:
       // - User accounts (Liabilities): Credits increase balance (platform owes user more), Debits decrease balance
+      // - System fee & insurance accounts (Equity/Revenue): Credits increase balance, Debits decrease balance
       // - System asset accounts (Assets): Debits increase balance, Credits decrease balance
-      // - System fee accounts (Equity): Credits increase balance
-      const isLiability = account.account_type === 'user_available' || account.account_type === 'user_held';
+      const isCreditNormal =
+        account.account_type === 'user_available' ||
+        account.account_type === 'user_held' ||
+        account.account_type === 'system_fee' ||
+        account.account_type === 'system_insurance';
 
-      if (isLiability) {
+      if (isCreditNormal) {
         newBalance = currentBalance + credit - debit;
       } else {
         newBalance = currentBalance + debit - credit;

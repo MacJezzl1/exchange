@@ -10,7 +10,8 @@
     "test": "echo \"Test scaffold for trading\""
   },
   "dependencies": {
-    "@exchange/shared-types": "workspace:*"
+    "@exchange/shared-types": "workspace:*",
+    "@exchange/ledger": "workspace:*"
   },
   "devDependencies": {
     "@exchange/config": "workspace:*",

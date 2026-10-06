@@ -292,6 +292,9 @@ importers:
 
   services/trading:
     dependencies:
+      '@exchange/ledger':
+        specifier: workspace:*
+        version: link:../ledger
       '@exchange/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
