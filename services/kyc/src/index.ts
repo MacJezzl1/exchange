@@ -1,3 +1,3 @@
-// Service: kyc
-export const SERVICE_NAME = 'kyc';
-console.log('[kyc] Service scaffold ready.');
+export * from './types';
+export * from './provider';
+export * from './service';
