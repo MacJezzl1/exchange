@@ -1,0 +1,19 @@
+{
+  "name": "@exchange/status",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@exchange/shared-types": "workspace:*",
+    "@exchange/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@exchange/config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}

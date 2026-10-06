@@ -1,0 +1,24 @@
+[profile.default]
+src = "contracts/src"
+out = "contracts/out"
+test = "contracts/test"
+script = "contracts/script"
+libs = ["contracts/lib"]
+solc_version = "0.8.26"
+optimizer = true
+optimizer_runs = 100000
+via_ir = true
+fs_permissions = [{ access = "read", path = "./" }]
+
+[profile.ci]
+fuzz = { runs = 1000 }
+invariant = { runs = 256, depth = 64 }
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = true
+int_types = "long"
+multiline_func_header = "all"
+quote_style = "double"
+number_underscore = "thousands"

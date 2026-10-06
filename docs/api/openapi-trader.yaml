@@ -1,0 +1,135 @@
+openapi: 3.1.0
+info:
+  title: Hybrid Exchange Platform - Trader Edge API
+  version: 1.0.0
+  description: Public edge REST API for non-custodial traders and institutional clients.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development gateway
+
+paths:
+  /api/v1/auth/passkey/register-options:
+    post:
+      summary: Generate WebAuthn registration options
+      responses:
+        '200':
+          description: Registration challenge and parameters
+
+  /api/v1/auth/passkey/verify-registration:
+    post:
+      summary: Verify WebAuthn registration response and issue session
+
+  /api/v1/auth/siwe/verify:
+    post:
+      summary: Verify Sign-In with Ethereum (EIP-4361) signature
+
+  /api/v1/markets:
+    get:
+      summary: List all active markets and fee tiers
+      responses:
+        '200':
+          description: Array of market configurations
+
+  /api/v1/markets/{symbol}/depth:
+    get:
+      summary: Retrieve order book depth snapshot
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bids and asks array with sequence number
+
+  /api/v1/orders:
+    post:
+      summary: Submit new signed EIP-712 order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - market_id
+                - side
+                - order_type
+                - price
+                - quantity
+                - nonce
+                - expiry
+                - signature
+              properties:
+                market_id:
+                  type: string
+                  format: uuid
+                side:
+                  type: string
+                  enum: [buy, sell]
+                order_type:
+                  type: string
+                  enum: [limit, market, post_only, ioc, fok]
+                price:
+                  type: string
+                  description: Integer atomic units
+                quantity:
+                  type: string
+                  description: Integer atomic units
+                nonce:
+                  type: integer
+                expiry:
+                  type: integer
+                signature:
+                  type: string
+      responses:
+        '201':
+          description: Order accepted by trading edge
+
+  /api/v1/orders/{order_id}:
+    delete:
+      summary: Cancel an open order
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order cancellation dispatched
+
+  /api/v1/account/balances:
+    get:
+      summary: Retrieve user available and held asset balances
+      security:
+        - SessionAuth: []
+        - ApiKeyAuth: []
+
+  /api/v1/account/deposits:
+    get:
+      summary: List on-chain and fiat deposits
+
+  /api/v1/account/withdrawals:
+    get:
+      summary: List on-chain and fiat withdrawals
+    post:
+      summary: Request on-chain or fiat withdrawal
+
+  /api/v1/account/panic-freeze:
+    post:
+      summary: Instant panic freeze locking account and cancelling open orders
+
+components:
+  securitySchemes:
+    SessionAuth:
+      type: apiKey
+      in: cookie
+      name: exchange_session
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY

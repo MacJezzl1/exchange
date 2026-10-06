@@ -1,0 +1,19 @@
+{
+  "name": "@exchange/custody-fiat",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "start": "node ./dist/index.js",
+    "dev": "node ./dist/index.js",
+    "test": "echo \"Test scaffold for custody-fiat\""
+  },
+  "dependencies": {
+    "@exchange/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@exchange/config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}

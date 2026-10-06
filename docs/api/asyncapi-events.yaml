@@ -1,0 +1,58 @@
+asyncapi: 3.0.0
+info:
+  title: Hybrid Exchange Platform - Asynchronous Events & WebSocket Streams
+  version: 1.0.0
+  description: Event-driven contracts for NATS JetStream message bus and WebSocket market data feeds.
+
+channels:
+  orderPlaced:
+    address: orders.commands.place
+    messages:
+      placeOrder:
+        payload:
+          type: object
+          properties:
+            order_id:
+              type: string
+            market_id:
+              type: string
+            side:
+              type: string
+            price:
+              type: string
+            quantity:
+              type: string
+
+  tradeExecuted:
+    address: engine.events.{symbol}.trade_executed
+    messages:
+      tradeEvent:
+        payload:
+          type: object
+          properties:
+            sequence:
+              type: integer
+            trade_id:
+              type: string
+            maker_order_id:
+              type: string
+            taker_order_id:
+              type: string
+            price:
+              type: string
+            quantity:
+              type: string
+
+  marketDepthDiff:
+    address: ws.market.{symbol}.depth
+    messages:
+      depthUpdate:
+        payload:
+          type: object
+          properties:
+            sequence:
+              type: integer
+            bids:
+              type: array
+            asks:
+              type: array

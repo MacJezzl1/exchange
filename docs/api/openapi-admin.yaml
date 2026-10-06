@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: Hybrid Exchange Platform - Admin API
+  version: 1.0.0
+  description: Isolated administrative API supporting hardware WebAuthn MFA and Four-Eyes approvals.
+
+servers:
+  - url: http://localhost:8081
+    description: Isolated admin gateway
+
+paths:
+  /admin/v1/auth/login:
+    post:
+      summary: Step 1 admin login (Email verification)
+
+  /admin/v1/auth/webauthn-verify:
+    post:
+      summary: Step 2 mandatory hardware token FIDO2 verification
+
+  /admin/v1/dashboard/metrics:
+    get:
+      summary: Retrieve volume, queues, settlement lag, and alerts
+
+  /admin/v1/approvals/pending:
+    get:
+      summary: List pending maker-checker approval requests
+
+  /admin/v1/approvals/{id}/action:
+    post:
+      summary: Maker creates or Checker signs off an approval request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - decision
+                - notes
+              properties:
+                decision:
+                  type: string
+                  enum: [approved, rejected]
+                notes:
+                  type: string
+
+  /admin/v1/kyc/cases:
+    get:
+      summary: List KYC review queue
+
+  /admin/v1/markets/{symbol}/halt:
+    post:
+      summary: Emergency halt market trading
+
+  /admin/v1/audit/events:
+    get:
+      summary: Search hash-chained audit log with integrity verification
+
+components:
+  securitySchemes:
+    AdminHardwareSession:
+      type: apiKey
+      in: cookie
+      name: admin_session
