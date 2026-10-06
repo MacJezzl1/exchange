@@ -1,0 +1,38 @@
+# Supabase configuration for Hybrid Exchange Platform
+project_id = "exchange-platform"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "identity", "ledger", "trading", "market", "custody", "fiat", "admin", "audit"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = true
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+port = 54323
+ip_version = "auto"
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3001", "http://localhost:3002"]
+jwt_expiry = 3600
+enable_signup = true
+
+[storage]
+enabled = true
+port = 54325

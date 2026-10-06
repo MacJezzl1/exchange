@@ -1,0 +1,19 @@
+{
+  "name": "@exchange/supabase",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@exchange/shared-types": "workspace:*",
+    "@supabase/supabase-js": "^2.117.2"
+  },
+  "devDependencies": {
+    "@exchange/config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}

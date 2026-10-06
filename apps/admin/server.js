@@ -4,7 +4,7 @@ const path = require('path');
 
 const PORT = 3001;
 
-const server = http.createServer((req, res) => {
+function handleRequest(req, res) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
   const html = `<!DOCTYPE html>
@@ -473,8 +473,14 @@ const server = http.createServer((req, res) => {
 </html>`;
 
   res.end(html);
-});
+}
 
-server.listen(PORT, () => {
-  console.log(`[apps/admin] Isolated Admin Portal shell running on http://localhost:${PORT}`);
-});
+const server = http.createServer(handleRequest);
+
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`[apps/admin] Isolated Admin Portal shell running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = handleRequest;

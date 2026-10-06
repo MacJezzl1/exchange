@@ -321,7 +321,7 @@ function renderHtml() {
 </html>`;
 }
 
-const server = http.createServer((req, res) => {
+function handleRequest(req, res) {
   const parsedUrl = url.parse(req.url, true);
 
   if (parsedUrl.pathname === '/api/status') {
@@ -348,8 +348,14 @@ const server = http.createServer((req, res) => {
   // Render HTML UI
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(renderHtml());
-});
+}
 
-server.listen(PORT, () => {
-  console.log(`[apps/status] Transparency and Proof-of-Reserves portal live at http://localhost:${PORT}`);
-});
+const server = http.createServer(handleRequest);
+
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`[apps/status] Transparency and Proof-of-Reserves portal live at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = handleRequest;
