@@ -1,3 +1,2 @@
-// Service: custody-fiat
-export const SERVICE_NAME = 'custody-fiat';
-console.log('[custody-fiat] Service scaffold ready.');
+export * from './types';
+export * from './african-rails';
