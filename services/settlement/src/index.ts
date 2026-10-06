@@ -1,3 +1,5 @@
-// Service: settlement
-export const SERVICE_NAME = 'settlement';
-console.log('[settlement] Service scaffold ready.');
+export * from './types';
+export * from './merkle';
+export * from './aggregator';
+export * from './proof-of-reserves';
+export * from './service';

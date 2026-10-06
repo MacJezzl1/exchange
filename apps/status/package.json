@@ -3,10 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node -e \"console.log('status dev')\"",
+    "dev": "node server.js",
     "build": "node -e \"console.log('apps/status ready')\"",
-    "start": "node -e \"console.log('status start')\"",
-    "lint": "next lint"
+    "start": "node server.js"
   },
   "dependencies": {
     "@exchange/shared-types": "workspace:*",
