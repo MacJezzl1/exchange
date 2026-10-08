@@ -4,9 +4,9 @@
   "private": true,
   "main": "./dist/index.js",
   "scripts": {
-    "build": "tsc -b",
-    "start": "node ./dist/index.js",
-    "dev": "node ./dist/index.js",
+    "build": "pnpm --filter @exchange/shared-types build && tsc -b",
+    "start": "node server.js",
+    "dev": "node server.js",
     "test": "echo \"Test scaffold for admin-api\""
   },
   "dependencies": {

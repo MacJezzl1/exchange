@@ -187,6 +187,14 @@
       "cardTier": "Obsidian Black (Metal)",
       "country": "South Africa",
       "registeredAt": "2026-10-08T05:49:18.060Z"
+    },
+    {
+      "id": "wait_1791439370710",
+      "email": "investor_vip@test.domain",
+      "walletAddress": null,
+      "cardTier": "Obsidian Black (Metal)",
+      "country": "South Africa",
+      "registeredAt": "2026-10-08T06:02:50.710Z"
     }
   ]
 }

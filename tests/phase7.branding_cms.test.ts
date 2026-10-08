@@ -127,15 +127,8 @@ describe('Phase 7: CapeChain Labs Branding, Visa Card & CMS Verification', () =>
 
     expect(vercelConfig.services).toBeDefined();
     expect(vercelConfig.services.web).toEqual({ root: 'apps/web', runtime: 'node', entrypoint: 'server.js' });
-    expect(vercelConfig.services.admin.bindings).toEqual([
-      { type: 'service', service: 'admin-api', format: 'url', env: 'ADMIN_API_URL' }
-    ]);
-    expect(vercelConfig.services['admin-api']).toEqual({
-      root: 'services/admin-api',
-      runtime: 'node',
-      entrypoint: 'server.js',
-      buildCommand: 'pnpm build',
-    });
+    expect(vercelConfig.services.admin).toEqual({ root: 'apps/admin', runtime: 'node', entrypoint: 'server.js' });
+    expect(vercelConfig.services.status).toEqual({ root: 'apps/status', runtime: 'node', entrypoint: 'server.js' });
     expect(vercelConfig.rewrites).toBeDefined();
     expect(vercelConfig.rewrites.length).toBeGreaterThan(0);
   });

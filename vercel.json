@@ -9,26 +9,12 @@
     "admin": {
       "root": "apps/admin",
       "runtime": "node",
-      "entrypoint": "server.js",
-      "bindings": [
-        {
-          "type": "service",
-          "service": "admin-api",
-          "format": "url",
-          "env": "ADMIN_API_URL"
-        }
-      ]
+      "entrypoint": "server.js"
     },
     "status": {
       "root": "apps/status",
       "runtime": "node",
       "entrypoint": "server.js"
-    },
-    "admin-api": {
-      "root": "services/admin-api",
-      "runtime": "node",
-      "entrypoint": "server.js",
-      "buildCommand": "pnpm build"
     }
   },
   "rewrites": [
