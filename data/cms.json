@@ -1,0 +1,152 @@
+{
+  "media": [
+    {
+      "id": "med_001",
+      "title": "CapeChain Labs Announces Strategic Partnership with Visa to Power Global Crypto-Fiat Payments on Base L2",
+      "slug": "capechain-visa-partnership-global-payments",
+      "category": "Partnership",
+      "author": "CapeChain Press Office",
+      "publishedAt": "2026-10-01T08:00:00Z",
+      "summary": "CapeChain Labs joins forces with Visa to launch a co-branded multi-currency debit card, allowing traders to spend crypto and local fiat currencies seamlessly at over 100 million merchants worldwide.",
+      "content": "Today, CapeChain Labs, the creator of the sovereign hybrid exchange platform on Base L2, announced an unprecedented partnership with Visa to deliver next-generation crypto payment solutions across Africa and emerging markets. The CapeChain Visa Card bridges off-chain CEX trading performance with on-chain self-custody, giving users immediate off-ramp liquidity with zero foreign exchange markup.",
+      "featured": true,
+      "readTime": "4 min read"
+    },
+    {
+      "id": "med_002",
+      "title": "CapeChain Closes $18M Series A to Accelerate Pan-African Next-Gen Hybrid Exchange Infrastructure",
+      "slug": "capechain-closes-18m-series-a",
+      "category": "Funding",
+      "author": "Editorial Desk",
+      "publishedAt": "2026-09-18T10:30:00Z",
+      "summary": "Funding will fuel expansion of fiat liquidity corridors across South Africa (ZAR), Nigeria (NGN), and Kenya (KES), and support hiring for matching engine performance teams.",
+      "content": "CapeChain Labs has raised $18 million in Series A funding led by premier fintech venture firms. The round will accelerate localized banking integrations, regulatory licensing in key African jurisdictions, and developer tooling around account abstraction and ERC-4337 smart accounts.",
+      "featured": false,
+      "readTime": "3 min read"
+    },
+    {
+      "id": "med_003",
+      "title": "Proof-of-Reserves 2.0: CapeChain Introduces Real-Time Merkle Solvency Proofs for Sovereign Custody",
+      "slug": "proof-of-reserves-2-realtime-solvency",
+      "category": "Technology",
+      "author": "Dr. Aris Thorne, Chief Cryptographer",
+      "publishedAt": "2026-08-25T14:00:00Z",
+      "summary": "Traders can now verify their account balances in real-time against on-chain Base L2 Vault reserves using cryptographically verified Merkle tree inclusion proofs.",
+      "content": "In an era demanding complete financial transparency, CapeChain Labs sets a new benchmark with its automated Proof-of-Reserves system. By marrying zero-negative balance double-entry ledgers with on-chain cryptographic proofs, traders can independently audit exchange solvency 24/7 without trusting third-party custodians.",
+      "featured": false,
+      "readTime": "5 min read"
+    },
+    {
+      "id": "med_004",
+      "title": "CapeChain Deploys Sub-10µs Deterministic Matching Engine Built in Rust",
+      "slug": "sub-10us-deterministic-matching-engine-rust",
+      "category": "Engineering",
+      "author": "Matching Engine Team",
+      "publishedAt": "2026-08-05T09:15:00Z",
+      "summary": "Achieving over 115,000 orders per second with microsecond latency, CapeChain redefines speed benchmarks for hybrid non-custodial trading.",
+      "content": "CapeChain Labs has published benchmark results for its deterministic order matching engine. Operating entirely in fixed-point integer arithmetic with lock-free memory architectures, the engine guarantees microsecond trade execution while eliminating MEV through Frequent Batch Auction options.",
+      "featured": false,
+      "readTime": "6 min read"
+    }
+  ],
+  "careers": [
+    {
+      "id": "job_001",
+      "title": "Senior Rust Systems Engineer (Matching Engine Core)",
+      "department": "Engineering",
+      "location": "Remote / Cape Town",
+      "type": "Full-time",
+      "experience": "Senior / Staff",
+      "compensation": "$180,000 - $240,000 + 0.25% Equity",
+      "description": "Design and optimize ultra-low-latency deterministic order books, execution pipelines, and fixed-point pricing algorithms running at 100k+ orders per second.",
+      "requirements": [
+        "5+ years of production Rust experience with zero-allocation data structures and CPU cache optimization",
+        "Deep familiarity with financial exchange mechanics (price-time priority, IOC/FOK order types, book snapshots)",
+        "Experience in high-concurrency memory synchronization and lock-free concurrency"
+      ],
+      "active": true
+    },
+    {
+      "id": "job_002",
+      "title": "L2 Smart Contract Security Architect",
+      "department": "Security & Blockchain",
+      "location": "Remote",
+      "type": "Full-time",
+      "experience": "Senior",
+      "compensation": "$170,000 - $230,000 + 0.20% Equity",
+      "description": "Architect, audit, and deploy Base L2 non-custodial Vault, Settlement, and ERC-4337 Account Abstraction contracts handling multi-million-dollar TVL.",
+      "requirements": [
+        "4+ years writing production Solidity with Foundry, formal verification, and fuzz testing",
+        "Track record of writing battle-tested settlement or escrow contracts",
+        "Deep knowledge of EVM gas optimization, Merkle proof verification, and emergency escape hatch mechanics"
+      ],
+      "active": true
+    },
+    {
+      "id": "job_003",
+      "title": "Head of Regulatory Compliance & AML (Africa)",
+      "department": "Legal & Compliance",
+      "location": "Nairobi / Lagos / Johannesburg",
+      "type": "Full-time",
+      "experience": "Director",
+      "compensation": "$140,000 - $190,000 + Bonus",
+      "description": "Lead licensing, KYC/AML regulatory policy, and banking partner liaisons across South Africa (FSCA), Nigeria (SEC), and Kenya (CMA).",
+      "requirements": [
+        "7+ years in institutional fintech or digital asset compliance leadership",
+        "Proven relationships with central banks, financial regulators, and payment rails across Sub-Saharan Africa",
+        "Expertise in FATF Travel Rule, transaction monitoring, and maker-checker dual authorization workflows"
+      ],
+      "active": true
+    },
+    {
+      "id": "job_004",
+      "title": "Lead Product Designer (Web3 & Mobile)",
+      "department": "Product & Design",
+      "location": "Remote / London / Cape Town",
+      "type": "Full-time",
+      "experience": "Lead",
+      "compensation": "$150,000 - $200,000 + Equity",
+      "description": "Craft world-class desktop and mobile interfaces for high-frequency traders, Visa cardholders, and institutional users.",
+      "requirements": [
+        "Demonstrated portfolio of elite, high-craft financial or crypto trading terminal UI/UX",
+        "Mastery of modern typography, micro-interactions, dark mode aesthetics, and design systems",
+        "Ability to distill complex cryptographic concepts (e.g. session keys, Merkle proofs) into frictionless user journeys"
+      ],
+      "active": true
+    },
+    {
+      "id": "job_005",
+      "title": "Treasury & Fiat Liquidity Manager",
+      "department": "Finance & Treasury",
+      "location": "Cape Town / Remote",
+      "type": "Full-time",
+      "experience": "Mid / Senior",
+      "compensation": "$120,000 - $160,000",
+      "description": "Oversee fiat liquidity buffers, bank settlement rails (Stitch, Paystack, M-Pesa), and FX hedging strategies across emerging market corridors.",
+      "requirements": [
+        "4+ years in FX trading, treasury operations, or fintech payment settlement",
+        "Experience managing automated multi-currency liquidity rebalancing",
+        "Knowledge of dual-custody maker-checker operational risk procedures"
+      ],
+      "active": true
+    }
+  ],
+  "cardWaitlist": [
+    {
+      "id": "wait_1791435783302",
+      "email": "investor_vip@test.domain",
+      "walletAddress": null,
+      "cardTier": "Obsidian Black (Metal)",
+      "country": "South Africa",
+      "registeredAt": "2026-10-08T05:03:03.302Z"
+    },
+    {
+      "id": "wait_1791436051602",
+      "email": "investor_vip@test.domain",
+      "walletAddress": null,
+      "cardTier": "Obsidian Black (Metal)",
+      "country": "South Africa",
+      "registeredAt": "2026-10-08T05:07:31.602Z"
+    }
+  ]
+}

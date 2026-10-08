@@ -1,8 +1,18 @@
 const http = require('http');
 const url = require('url');
+const fs = require('fs');
+const path = require('path');
 const { createHash } = require('crypto');
 
 const PORT = process.env.PORT || 3002;
+
+let logoBase64 = '';
+try {
+  const logoPath = path.join(__dirname, 'public', 'logo.png');
+  if (fs.existsSync(logoPath)) {
+    logoBase64 = fs.readFileSync(logoPath).toString('base64');
+  }
+} catch (_) {}
 
 // Simulated on-chain state and settlement service data
 const mockState = {
@@ -194,11 +204,11 @@ function renderHtml() {
 <body>
   <div class="container">
     <header>
-      <div class="brand">
-        <div class="brand-icon">H</div>
+      <div class="brand" style="display: flex; align-items: center; gap: 14px;">
+        <img src="/logo.png" alt="CapeChain Labs" style="width: 38px; height: 38px; object-fit: contain; border-radius: 8px;" onerror="this.onerror=null; this.src='data:image/png;base64,${logoBase64}';" />
         <div>
-          <h1 style="font-size: 20px; font-weight: 800;">Hybrid Exchange Transparency Center</h1>
-          <p style="font-size: 13px; color: var(--text-muted);">Non-Custodial Settlement & Proof-of-Reserves Verification</p>
+          <h1 style="font-size: 20px; font-weight: 800;">CapeChain Labs <span style="font-size: 14px; font-weight: 500; color: #00e5ff;">Transparency Center</span></h1>
+          <p style="font-size: 13px; color: var(--text-muted);">Non-Custodial Base L2 Settlement & Proof-of-Reserves Verification</p>
         </div>
       </div>
       <div class="live-pulse">
@@ -343,6 +353,14 @@ function handleRequest(req, res) {
   if (parsedUrl.pathname === '/api/batches') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify(mockState.recentBatches));
+  }
+
+  if (parsedUrl.pathname === '/logo.png' || parsedUrl.pathname === '/logo.jpg') {
+    const file = path.join(__dirname, 'public', 'logo.png');
+    if (fs.existsSync(file)) {
+      res.writeHead(200, { 'Content-Type': 'image/png' });
+      return fs.createReadStream(file).pipe(res);
+    }
   }
 
   // Render HTML UI
