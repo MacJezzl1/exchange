@@ -3,11 +3,13 @@
   "services": {
     "web": {
       "root": "apps/web",
-      "runtime": "node"
+      "runtime": "node",
+      "entrypoint": "server.js"
     },
     "admin": {
       "root": "apps/admin",
       "runtime": "node",
+      "entrypoint": "server.js",
       "bindings": [
         {
           "type": "service",
@@ -19,15 +21,14 @@
     },
     "status": {
       "root": "apps/status",
-      "runtime": "node"
+      "runtime": "node",
+      "entrypoint": "server.js"
     },
     "admin-api": {
       "root": "services/admin-api",
-      "runtime": "node"
-    },
-    "matching-engine": {
-      "root": "services/matching-engine",
-      "runtime": "rust"
+      "runtime": "node",
+      "entrypoint": "server.js",
+      "buildCommand": "pnpm build"
     }
   },
   "rewrites": [
