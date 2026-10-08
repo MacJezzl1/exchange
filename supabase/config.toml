@@ -1,5 +1,5 @@
 # Supabase configuration for Hybrid Exchange Platform
-project_id = "exchange-platform"
+project_id = "hvayastdrwippkaltrbt"
 
 [api]
 enabled = true

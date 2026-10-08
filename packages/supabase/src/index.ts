@@ -11,8 +11,8 @@ export interface SupabaseConfig {
  * Used in Trader Terminal, Transparency Center, and client SDKs.
  */
 export function createExchangeSupabaseClient(
-  url = process.env['SUPABASE_URL'] || 'https://placeholder-project.supabase.co',
-  anonKey = process.env['SUPABASE_ANON_KEY'] || 'public-anon-key-placeholder'
+  url = process.env['SUPABASE_URL'] || 'https://hvayastdrwippkaltrbt.supabase.co',
+  anonKey = process.env['SUPABASE_ANON_KEY'] || 'sb_publishable_MaLAEpbCKGi70x1_KTgmkw_YEFEFGwv'
 ): SupabaseClient {
   return createClient(url, anonKey, {
     auth: {
