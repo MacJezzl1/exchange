@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node -e \"console.log('web dev')\"",
+    "dev": "node server.js",
     "build": "node -e \"console.log('apps/web ready')\"",
-    "start": "node -e \"console.log('web start')\"",
+    "start": "node server.js",
     "lint": "next lint"
   },
   "dependencies": {

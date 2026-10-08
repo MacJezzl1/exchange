@@ -1,14 +1,77 @@
 {
-  "version": 2,
-  "buildCommand": "pnpm build",
-  "installCommand": "pnpm install",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "web": {
+      "root": "apps/web",
+      "runtime": "node"
+    },
+    "admin": {
+      "root": "apps/admin",
+      "runtime": "node",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "admin-api",
+          "format": "url",
+          "env": "ADMIN_API_URL"
+        }
+      ]
+    },
+    "status": {
+      "root": "apps/status",
+      "runtime": "node"
+    },
+    "admin-api": {
+      "root": "services/admin-api",
+      "runtime": "node"
+    },
+    "matching-engine": {
+      "root": "services/matching-engine",
+      "runtime": "rust"
+    }
+  },
   "rewrites": [
     {
+      "source": "/admin/(.*)",
+      "destination": {
+        "service": "admin"
+      }
+    },
+    {
+      "source": "/admin",
+      "destination": {
+        "service": "admin"
+      }
+    },
+    {
+      "source": "/status/(.*)",
+      "destination": {
+        "service": "status"
+      }
+    },
+    {
+      "source": "/status",
+      "destination": {
+        "service": "status"
+      }
+    },
+    {
+      "source": "/por/(.*)",
+      "destination": {
+        "service": "status"
+      }
+    },
+    {
+      "source": "/por",
+      "destination": {
+        "service": "status"
+      }
+    },
+    {
       "source": "/(.*)",
-      "destination": "/api/index.js"
+      "destination": {
+        "service": "web"
+      }
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }

@@ -39,6 +39,33 @@ function handleRequest(req, res) {
   }
 
   // --------------------------------------------------------------------------
+  // ADMIN API PROXY: Route /admin/v1/* to internal admin-api service via ADMIN_API_URL binding
+  // --------------------------------------------------------------------------
+  if (pathname.startsWith('/admin/v1/') || pathname.startsWith('/admin/admin/v1/')) {
+    const adminApiBase = process.env.ADMIN_API_URL || 'http://localhost:8081';
+    const cleanPath = pathname.startsWith('/admin/admin/v1/') ? pathname.replace('/admin', '') : pathname;
+    const target = new URL(cleanPath + (parsedUrl.search || ''), adminApiBase);
+
+    const proxyReq = http.request(target, {
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: target.host
+      }
+    }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res);
+    });
+
+    proxyReq.on('error', (err) => {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal admin-api unavailable: ' + err.message }));
+    });
+
+    return req.pipe(proxyReq);
+  }
+
+  // --------------------------------------------------------------------------
   // ADMIN API: CMS Endpoints (Media, Careers, Waitlist)
   // --------------------------------------------------------------------------
   if (pathname === '/admin/api/cms' || pathname === '/api/cms') {
@@ -789,7 +816,7 @@ function handleRequest(req, res) {
     // ------------------------------------------------------------------------
     async function loadApprovals() {
       try {
-        const res = await fetch('http://localhost:8081/admin/v1/approvals/pending');
+        const res = await fetch('/admin/v1/approvals/pending');
         const data = await res.json();
         const tbody = document.getElementById('approvals-tbody');
         tbody.innerHTML = '';
@@ -825,7 +852,7 @@ function handleRequest(req, res) {
 
     async function loadAuditLog() {
       try {
-        const res = await fetch('http://localhost:8081/admin/v1/audit/events');
+        const res = await fetch('/admin/v1/audit/events');
         const data = await res.json();
         const feed = document.getElementById('audit-feed');
         feed.innerHTML = '';
@@ -862,7 +889,7 @@ function handleRequest(req, res) {
 
     async function createMockRequest() {
       try {
-        await fetch('http://localhost:8081/admin/v1/approvals/create', {
+        await fetch('/admin/v1/approvals/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -883,7 +910,7 @@ function handleRequest(req, res) {
 
     async function approveRequest(id) {
       try {
-        const res = await fetch(\`http://localhost:8081/admin/v1/approvals/\${id}/decision\`, {
+        const res = await fetch(\`/admin/v1/approvals/\${id}/decision\`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -907,7 +934,7 @@ function handleRequest(req, res) {
 
     async function verifyChain() {
       try {
-        const res = await fetch('http://localhost:8081/admin/v1/audit/verify-chain');
+        const res = await fetch('/admin/v1/audit/verify-chain');
         const data = await res.json();
         if (data.isValid) {
           alert(\`✅ CRYPTOGRAPHIC AUDIT CHAIN VERIFIED UNBROKEN! Total events checked: \${data.totalEvents}. All SHA-256 links verified.\`);
