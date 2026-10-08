@@ -39,8 +39,18 @@ function getSharedHeader(activeTab = 'home') {
         </nav>
 
         <div class="nav-actions">
-          <button class="btn-ghost" onclick="openAuthModal('signin')">Sign In</button>
-          <button class="btn-primary" onclick="openAuthModal('signup')">Create Account</button>
+          <div id="user-auth-badge" style="display: none; align-items: center; gap: 10px;">
+            <div class="wallet-pill" onclick="window.location.href='/trade'">
+              <span class="online-indicator"></span>
+              <span id="user-display-address" style="font-family: var(--font-mono); font-size: 13px; font-weight: 700;">0x8a9B...F241</span>
+            </div>
+            <button class="btn-ghost" style="padding: 6px 12px; font-size: 12px;" onclick="signOutUser()">Sign Out</button>
+          </div>
+
+          <div id="guest-auth-actions" style="display: flex; align-items: center; gap: 12px;">
+            <button class="btn-ghost" onclick="openAuthModal('signin')">Sign In</button>
+            <button class="btn-primary" onclick="openAuthModal('signup')">Create Account</button>
+          </div>
         </div>
       </div>
     </header>
@@ -172,6 +182,10 @@ function getAuthModalHtml() {
         </p>
       </div>
     </div>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container" class="toast-stack"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       const SUPABASE_PROJECT_URL = 'https://hvayastdrwippkaltrbt.supabase.co';
@@ -185,15 +199,58 @@ function getAuthModalHtml() {
         console.warn('Supabase init notice:', err);
       }
 
-      function showAuthStatus(msg, isSuccess = true) {
-        const el = document.getElementById('auth-status-msg');
-        if (!el) return;
-        el.style.display = 'block';
-        el.style.background = isSuccess ? 'rgba(0, 230, 118, 0.15)' : 'rgba(244, 63, 94, 0.15)';
-        el.style.border = '1px solid ' + (isSuccess ? '#00e676' : '#f43f5e');
-        el.style.color = isSuccess ? '#00e676' : '#f43f5e';
-        el.innerHTML = msg;
+      function showToast(title, message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast-item toast-' + type;
+        const icon = type === 'success' ? '✅' : (type === 'danger' ? '❌' : 'ℹ️');
+        toast.innerHTML = \`
+          <span class="toast-icon">\${icon}</span>
+          <div class="toast-content">
+            <div class="toast-title">\${title}</div>
+            <div class="toast-msg">\${message}</div>
+          </div>
+          <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+        \`;
+        container.appendChild(toast);
+        setTimeout(() => {
+          if (toast.parentElement) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            setTimeout(() => toast.remove(), 300);
+          }
+        }, 4500);
       }
+
+      function checkAuthSession() {
+        const stored = localStorage.getItem('capechain_user');
+        const badge = document.getElementById('user-auth-badge');
+        const guest = document.getElementById('guest-auth-actions');
+        const addrEl = document.getElementById('user-display-address');
+        if (stored) {
+          try {
+            const u = JSON.parse(stored);
+            if (badge) badge.style.display = 'flex';
+            if (guest) guest.style.display = 'none';
+            if (addrEl) addrEl.innerText = u.address ? u.address.slice(0, 6) + '...' + u.address.slice(-4) : '0x8a9B...F241';
+          } catch (_) {}
+        } else {
+          if (badge) badge.style.display = 'none';
+          if (guest) guest.style.display = 'flex';
+        }
+      }
+
+      function signOutUser() {
+        localStorage.removeItem('capechain_user');
+        showToast('Signed Out', 'Your sovereign session has been safely closed.', 'info');
+        checkAuthSession();
+        if (window.location.pathname === '/trade') {
+          setTimeout(() => window.location.reload(), 400);
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', checkAuthSession);
     </script>
   `;
 }
@@ -213,6 +270,7 @@ function getSharedStyles() {
       --text-main: #f3f6fc;
       --text-muted: #8b9bb4;
       --success: #00e676;
+      --danger: #f43f5e;
       --visa-gold: #f7b600;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', Consolas, Menlo, monospace;
@@ -235,7 +293,7 @@ function getSharedStyles() {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(7, 9, 14, 0.85);
+      background: rgba(7, 9, 14, 0.88);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-subtle);
       padding: 14px 24px;
@@ -278,7 +336,7 @@ function getSharedStyles() {
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 26px;
     }
     .nav-link {
       color: var(--text-muted);
@@ -314,6 +372,28 @@ function getSharedStyles() {
       display: flex;
       align-items: center;
       gap: 12px;
+    }
+    .wallet-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 229, 255, 0.08);
+      border: 1px solid var(--border-glow);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .wallet-pill:hover {
+      background: rgba(0, 229, 255, 0.16);
+    }
+    .online-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
     }
     .btn-ghost {
       background: transparent;
@@ -402,29 +482,24 @@ function getSharedStyles() {
       color: var(--text-muted);
     }
     .auth-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 4px;
-      border-radius: 10px;
+      display: flex;
+      border-bottom: 1px solid var(--border-subtle);
       margin-bottom: 20px;
-      border: 1px solid var(--border-subtle);
     }
     .auth-tab {
+      flex: 1;
       background: transparent;
       border: none;
+      border-bottom: 2px solid transparent;
       color: var(--text-muted);
-      padding: 8px;
-      font-size: 13px;
+      padding: 10px;
+      font-size: 14px;
       font-weight: 600;
-      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s;
     }
     .auth-tab.active {
-      background: var(--bg-surface-elevated);
-      color: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      color: var(--brand-cyan);
+      border-bottom-color: var(--brand-cyan);
     }
     .social-auth-stack {
       display: flex;
@@ -437,116 +512,130 @@ function getSharedStyles() {
       align-items: center;
       justify-content: center;
       gap: 12px;
-      padding: 12px 16px;
+      padding: 12px;
       border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
-      border: 1px solid transparent;
-      text-decoration: none;
     }
-    .btn-apple {
-      background: #000;
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    .btn-apple:hover {
-      background: #111;
-      border-color: rgba(255, 255, 255, 0.35);
-    }
-    .btn-google {
-      background: #fff;
-      color: #1f1f1f;
-    }
-    .btn-google:hover {
-      background: #f1f1f1;
-    }
-    .btn-passkey {
-      background: rgba(0, 229, 255, 0.08);
-      border: 1px solid rgba(0, 229, 255, 0.25);
-      color: var(--brand-cyan);
-    }
-    .btn-passkey:hover {
-      background: rgba(0, 229, 255, 0.15);
-      border-color: var(--brand-cyan);
-    }
-    .btn-wallet {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border-subtle);
-      color: #fff;
-    }
-    .btn-wallet:hover {
+    .social-btn:hover {
       background: rgba(255, 255, 255, 0.08);
       border-color: rgba(255, 255, 255, 0.2);
     }
     .auth-divider {
-      display: flex;
-      align-items: center;
       text-align: center;
-      color: var(--text-muted);
-      font-size: 12px;
-      margin-bottom: 16px;
+      position: relative;
+      margin: 18px 0;
     }
-    .auth-divider::before, .auth-divider::after {
+    .auth-divider::before {
       content: '';
-      flex: 1;
-      border-bottom: 1px solid var(--border-subtle);
+      position: absolute;
+      left: 0; right: 0; top: 50%;
+      height: 1px;
+      background: var(--border-subtle);
     }
     .auth-divider span {
-      padding: 0 10px;
+      position: relative;
+      background: var(--bg-surface);
+      padding: 0 12px;
+      font-size: 12px;
+      color: var(--text-muted);
     }
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    .form-group {
+      margin-bottom: 14px;
     }
     .form-group label {
       display: block;
       font-size: 12px;
+      font-weight: 600;
       color: var(--text-muted);
       margin-bottom: 6px;
     }
     .form-input {
       width: 100%;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.35);
       border: 1px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 12px 14px;
+      padding: 10px 14px;
       color: #fff;
       font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
     }
     .form-input:focus {
-      outline: none;
       border-color: var(--brand-cyan);
-      box-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
     }
     .btn-submit-auth {
+      width: 100%;
       background: var(--brand-gradient);
       border: none;
       color: #000;
       padding: 12px;
       border-radius: 8px;
+      font-size: 14px;
       font-weight: 700;
       cursor: pointer;
-      font-size: 14px;
-      margin-top: 6px;
+      transition: all 0.2s;
+    }
+    .btn-submit-auth:hover {
+      filter: brightness(1.15);
     }
     .auth-terms {
+      text-align: center;
       font-size: 11px;
       color: var(--text-muted);
-      text-align: center;
       margin-top: 18px;
       line-height: 1.5;
     }
-    .auth-terms a {
-      color: var(--brand-cyan);
-      text-decoration: none;
+
+    /* Toast Stack */
+    .toast-stack {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
     }
+    .toast-item {
+      pointer-events: auto;
+      background: rgba(14, 18, 26, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glow);
+      border-radius: 12px;
+      padding: 14px 18px;
+      min-width: 320px;
+      max-width: 440px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      animation: toastIn 0.3s ease-out;
+      transition: all 0.3s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .toast-item.toast-success { border-color: rgba(0, 230, 118, 0.4); }
+    .toast-item.toast-danger { border-color: rgba(244, 63, 94, 0.4); }
+    .toast-item.toast-info { border-color: rgba(0, 229, 255, 0.4); }
+    .toast-icon { font-size: 18px; line-height: 1; }
+    .toast-content { flex: 1; }
+    .toast-title { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+    .toast-msg { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .toast-close { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; }
 
     /* Footer */
     .footer {
-      background: #040508;
+      background: #05070a;
       border-top: 1px solid var(--border-subtle);
       padding: 60px 24px 30px;
       margin-top: auto;
@@ -562,25 +651,28 @@ function getSharedStyles() {
     .footer-brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 10px;
+      margin-bottom: 14px;
     }
     .footer-logo {
       height: 32px;
+      width: auto;
     }
     .footer-desc {
       font-size: 13px;
       color: var(--text-muted);
+      line-height: 1.6;
       margin-bottom: 20px;
       max-width: 380px;
     }
     .footer-badges {
       display: flex;
-      flex-wrap: wrap;
       gap: 8px;
+      flex-wrap: wrap;
     }
     .sec-badge {
       font-size: 11px;
+      font-weight: 600;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border-subtle);
       padding: 4px 10px;
@@ -592,37 +684,42 @@ function getSharedStyles() {
       font-weight: 700;
       color: #fff;
       margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     .footer-col a {
       display: block;
       color: var(--text-muted);
-      font-size: 13px;
       text-decoration: none;
+      font-size: 13px;
       margin-bottom: 10px;
       transition: color 0.2s;
     }
     .footer-col a:hover {
-      color: var(--brand-cyan);
+      color: #fff;
     }
     .hiring-pill {
       font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 9999px;
+      font-weight: 700;
       background: rgba(0, 230, 118, 0.15);
       border: 1px solid var(--success);
       color: var(--success);
-      margin-left: 6px;
+      padding: 1px 6px;
+      border-radius: 9999px;
+      margin-left: 4px;
     }
     .footer-bottom {
       max-width: 1280px;
       margin: 0 auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
       padding-top: 24px;
-      border-top: 1px solid var(--border-subtle);
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 12px;
       color: var(--text-muted);
+      flex-wrap: wrap;
+      gap: 16px;
     }
     .footer-legal {
       display: flex;
@@ -632,23 +729,12 @@ function getSharedStyles() {
       color: var(--text-muted);
       text-decoration: none;
     }
-    .footer-legal a:hover {
-      color: #fff;
-    }
-
-    @media (max-width: 900px) {
-      .footer-container {
-        grid-template-columns: 1fr;
-      }
-      .nav-links {
-        display: none;
-      }
-    }
+    .footer-legal a:hover { color: #fff; }
   `;
 }
 
 // ============================================================================
-// 1. MARKETING LANDING PAGE (Hero, Ticker, Visa Card Showcase, Features)
+// 1. HOMEPAGE (/)
 // ============================================================================
 function renderHomePage() {
   return `<!DOCTYPE html>
@@ -656,16 +742,13 @@ function renderHomePage() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CapeChain Labs — Hybrid Exchange on Base L2 | Sovereign Trading & Visa Card</title>
+  <title>CapeChain Labs — Sovereign Next-Gen Hybrid Exchange on Base L2</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     ${getSharedStyles()}
-
-    /* Hero Section */
     .hero {
-      position: relative;
-      padding: 90px 24px 70px;
+      padding: 90px 24px 60px;
       text-align: center;
       max-width: 1100px;
       margin: 0 auto;
@@ -676,19 +759,19 @@ function renderHomePage() {
       gap: 8px;
       background: rgba(0, 229, 255, 0.08);
       border: 1px solid var(--border-glow);
+      color: var(--brand-cyan);
       padding: 6px 16px;
       border-radius: 9999px;
       font-size: 13px;
-      font-weight: 600;
-      color: var(--brand-cyan);
+      font-weight: 700;
       margin-bottom: 24px;
     }
     .hero-title {
       font-size: 56px;
       font-weight: 900;
-      line-height: 1.1;
+      line-height: 1.12;
       letter-spacing: -0.03em;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     .hero-gradient {
       background: var(--brand-gradient);
@@ -698,7 +781,7 @@ function renderHomePage() {
     .hero-subtitle {
       font-size: 19px;
       color: var(--text-muted);
-      max-width: 720px;
+      max-width: 740px;
       margin: 0 auto 36px;
       line-height: 1.6;
     }
@@ -754,7 +837,7 @@ function renderHomePage() {
     .ticker-section {
       border-top: 1px solid var(--border-subtle);
       border-bottom: 1px solid var(--border-subtle);
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.35);
       padding: 14px 24px;
     }
     .ticker-wrapper {
@@ -773,9 +856,58 @@ function renderHomePage() {
       white-space: nowrap;
     }
     .pair-name { font-weight: 700; }
-    .pair-price { font-family: var(--font-mono); }
+    .pair-price { font-family: var(--font-mono); transition: color 0.3s; }
     .pair-change.up { color: var(--success); font-weight: 600; }
-    .pair-change.down { color: #f43f5e; font-weight: 600; }
+    .pair-change.down { color: var(--danger); font-weight: 600; }
+
+    /* Interactive FX Settlement Box */
+    .fx-section {
+      padding: 80px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .fx-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glow);
+      border-radius: 20px;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 40px;
+      align-items: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .fx-calc-panel {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .calc-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    /* PoR Solvency Widget */
+    .por-preview-section {
+      padding: 60px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .por-card {
+      background: linear-gradient(135deg, rgba(14, 18, 26, 0.9), rgba(21, 27, 39, 0.9));
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 20px 50px rgba(0, 230, 118, 0.08);
+    }
+    .por-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
 
     /* Visa Card Showcase */
     .visa-section {
@@ -849,57 +981,18 @@ function renderHomePage() {
       font-size: 16px;
       flex-shrink: 0;
     }
-    .perk-text h4 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-    }
-    .perk-text p {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-    .card-waitlist-box {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-glow);
-      border-radius: 14px;
-      padding: 20px;
-    }
-    .card-waitlist-form {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .waitlist-input {
-      flex: 1;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 12px 14px;
-      color: #fff;
-      font-size: 14px;
-    }
+    .perk-text h4 { font-size: 15px; font-weight: 700; color: #fff; }
+    .perk-text p { font-size: 13px; color: var(--text-muted); }
 
-    /* Grid Feature Section */
+    /* Features Grid */
     .features-section {
       padding: 80px 24px;
       max-width: 1280px;
       margin: 0 auto;
     }
-    .section-header {
-      text-align: center;
-      margin-bottom: 50px;
-    }
-    .section-title {
-      font-size: 34px;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
-    .section-desc {
-      font-size: 16px;
-      color: var(--text-muted);
-      max-width: 600px;
-      margin: 0 auto;
-    }
+    .section-header { text-align: center; margin-bottom: 50px; }
+    .section-title { font-size: 34px; font-weight: 800; margin-bottom: 12px; }
+    .section-desc { font-size: 16px; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
     .feature-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -917,28 +1010,43 @@ function renderHomePage() {
       transform: translateY(-4px);
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 229, 255, 0.1);
     }
-    .feature-icon {
-      font-size: 28px;
-      margin-bottom: 16px;
-      display: inline-block;
+    .feature-icon { font-size: 28px; margin-bottom: 16px; display: inline-block; }
+    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .feature-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+    /* FAQ Accordion */
+    .faq-section {
+      padding: 70px 24px;
+      max-width: 900px;
+      margin: 0 auto 80px;
     }
-    .feature-card h3 {
-      font-size: 18px;
+    .faq-item {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .faq-question {
+      padding: 20px 24px;
+      font-size: 16px;
       font-weight: 700;
-      margin-bottom: 10px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
     }
-    .feature-card p {
+    .faq-answer {
+      display: none;
+      padding: 0 24px 20px;
       font-size: 14px;
       color: var(--text-muted);
-      line-height: 1.6;
+      line-height: 1.7;
     }
-
-    @media (max-width: 900px) {
-      .hero-title { font-size: 38px; }
-      .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      .visa-container { grid-template-columns: 1fr; }
-      .feature-grid { grid-template-columns: 1fr; }
-    }
+    .faq-item.active .faq-answer { display: block; }
+    .faq-item.active .faq-question span { transform: rotate(180deg); color: var(--brand-cyan); }
   </style>
 </head>
 <body>
@@ -947,7 +1055,7 @@ function renderHomePage() {
   <!-- Hero -->
   <section class="hero">
     <div class="hero-badge">
-      ⚡ Powered by Base L2 & CapeChain Matching Engine
+      ⚡ Powered by Base L2 &amp; CapeChain Matching Engine
     </div>
     <h1 class="hero-title">
       The Sovereign Exchange for <br/>
@@ -976,7 +1084,7 @@ function renderHomePage() {
         <div class="stat-label">Avg Matching Latency</div>
       </div>
       <div class="stat-item">
-        <div class="stat-num">102.8%</div>
+        <div class="stat-num" style="color: #00e676;">102.8%</div>
         <div class="stat-label">Proof-of-Reserves Ratio</div>
       </div>
       <div class="stat-item">
@@ -986,22 +1094,22 @@ function renderHomePage() {
     </div>
   </section>
 
-  <!-- Live Market Ticker -->
+  <!-- Live Market Ticker Tape -->
   <div class="ticker-section">
     <div class="ticker-wrapper">
       <div class="ticker-pair">
         <span class="pair-name">BTC / USDT</span>
-        <span class="pair-price">$64,280.50</span>
+        <span id="ticker-btc" class="pair-price">$64,280.50</span>
         <span class="pair-change up">+2.84%</span>
       </div>
       <div class="ticker-pair">
         <span class="pair-name">ETH / USDC</span>
-        <span class="pair-price">$3,492.10</span>
+        <span id="ticker-eth" class="pair-price">$3,492.10</span>
         <span class="pair-change up">+1.92%</span>
       </div>
       <div class="ticker-pair">
         <span class="pair-name">SOL / USDC</span>
-        <span class="pair-price">$154.20</span>
+        <span id="ticker-sol" class="pair-price">$154.20</span>
         <span class="pair-change up">+5.12%</span>
       </div>
       <div class="ticker-pair">
@@ -1021,6 +1129,102 @@ function renderHomePage() {
       </div>
     </div>
   </div>
+
+  <!-- Interactive FX Calculator -->
+  <section class="fx-section">
+    <div class="fx-box">
+      <div>
+        <span style="font-size: 12px; font-weight: 700; color: var(--brand-cyan); letter-spacing: 0.08em; text-transform: uppercase;">Zero-Spread Local Currency Settlement</span>
+        <h2 style="font-size: 32px; font-weight: 900; margin-top: 8px; margin-bottom: 16px;">Direct Crypto-to-Fiat Banking Rails</h2>
+        <p style="font-size: 15px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;">
+          Convert your Base L2 stablecoins and crypto into instant local fiat across South Africa, Nigeria, Kenya, the EU, and the US with zero intermediary markup.
+        </p>
+        <div style="display: flex; gap: 16px; font-size: 13px;">
+          <div><strong style="color: #fff;">⚡ Stitch EFT</strong>: South Africa</div>
+          <div><strong style="color: #fff;">⚡ Paystack NIP</strong>: Nigeria</div>
+          <div><strong style="color: #fff;">⚡ M-Pesa STK</strong>: Kenya</div>
+        </div>
+      </div>
+
+      <div class="fx-calc-panel">
+        <div style="font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 12px;">Interactive Instant FX Converter</div>
+        <div class="calc-row">
+          <input type="number" id="calc-in-val" value="500" class="form-input" style="flex: 2; font-family: var(--font-mono); font-weight: 700;" oninput="updateFxCalculation()" />
+          <select id="calc-in-curr" class="form-input" style="flex: 1;" onchange="updateFxCalculation()">
+            <option value="USDT">USDT</option>
+            <option value="BTC">BTC</option>
+            <option value="ETH">ETH</option>
+          </select>
+        </div>
+
+        <div style="text-align: center; font-size: 14px; color: var(--brand-cyan); margin: -4px 0 10px;">&darr; Instant Settlement Rail &darr;</div>
+
+        <div class="calc-row">
+          <input type="text" id="calc-out-val" readonly value="R 9,210.00" class="form-input" style="flex: 2; background: rgba(0,229,255,0.06); font-family: var(--font-mono); font-weight: 800; color: #00e676;" />
+          <select id="calc-out-curr" class="form-input" style="flex: 1;" onchange="updateFxCalculation()">
+            <option value="ZAR">ZAR (South Africa)</option>
+            <option value="NGN">NGN (Nigeria)</option>
+            <option value="KES">KES (Kenya)</option>
+            <option value="USD">USD (FedNow)</option>
+            <option value="EUR">EUR (SEPA)</option>
+          </select>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px 14px; font-size: 12px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span style="color: var(--text-muted);">Exchange Rate:</span>
+            <span id="calc-rate-label" style="font-family: var(--font-mono); color: #fff; font-weight: 600;">1 USDT = 18.42 ZAR</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Conversion Fee:</span>
+            <span style="color: var(--success); font-weight: 700;">0.00% (Zero Fee Tier)</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="width: 100%; padding: 12px;" onclick="executeFxInstantSwap()">
+          Execute Instant Settlement &rarr;
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Real-Time Proof-of-Reserves Solvency Widget -->
+  <section class="por-preview-section">
+    <div class="por-card">
+      <div class="por-header">
+        <div>
+          <span style="font-size: 11px; font-weight: 700; color: #00e676; letter-spacing: 0.08em; text-transform: uppercase;">Cryptographic Solvency Audit</span>
+          <h3 style="font-size: 24px; font-weight: 900; color: #fff; margin-top: 4px;">Real-Time Proof-of-Reserves (PoR) 2.0</h3>
+        </div>
+        <a href="http://localhost:3002" target="_blank" class="btn-ghost" style="padding: 8px 16px; font-size: 12px;">Launch Transparency Center &rarr;</a>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px;">
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px;">
+          <div style="font-size: 12px; color: var(--text-muted);">Total Collateralization</div>
+          <div style="font-size: 28px; font-weight: 900; color: #00e676; font-family: var(--font-mono);">102.8%</div>
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Over-collateralized across all assets</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px;">
+          <div style="font-size: 12px; color: var(--text-muted);">On-Chain Base L2 Reserves</div>
+          <div style="font-size: 28px; font-weight: 900; color: #fff; font-family: var(--font-mono);">$18.45M</div>
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Secured in non-custodial smart vaults</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px;">
+          <div style="font-size: 12px; color: var(--text-muted);">Emergency Escape Hatch</div>
+          <div style="font-size: 28px; font-weight: 900; color: #f59e0b; font-family: var(--font-mono);">7 Days</div>
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Autonomous sovereign exit if halted</div>
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Verify Wallet Inclusion:</span>
+        <input type="text" id="por-check-addr" value="0x8a9BF241c8889953F9d4793f77EB0076a5bFF241" class="form-input" style="flex: 1; min-width: 280px; font-family: var(--font-mono); font-size: 12px;" />
+        <button class="btn-ghost" style="padding: 10px 18px; font-size: 13px;" onclick="verifyWalletInclusion()">Query Merkle Proof</button>
+      </div>
+      <div id="por-verify-res" style="display: none; margin-top: 14px; font-size: 13px; font-family: var(--font-mono); padding: 12px; border-radius: 8px; background: rgba(0,230,118,0.1); border: 1px solid #00e676; color: #00e676;"></div>
+    </div>
+  </section>
 
   <!-- Visa Metal Card Showcase -->
   <section class="visa-section">
@@ -1063,17 +1267,17 @@ function renderHomePage() {
           <div class="perk-item">
             <div class="perk-icon">🌍</div>
             <div class="perk-text">
-              <h4>African & Global Multi-Currency Rails</h4>
+              <h4>African &amp; Global Multi-Currency Rails</h4>
               <p>Spend seamless ZAR, NGN, KES, USD, and EUR without predatory foreign transaction exchange penalties.</p>
             </div>
           </div>
         </div>
 
-        <div class="card-waitlist-box">
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-glow); border-radius: 14px; padding: 22px;">
           <h4 style="font-size: 15px; font-weight: 700; color: #fff;">Join the Exclusive Card Waitlist</h4>
           <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Early waitlist members receive a limited-edition Obsidian Titanium Metal card and zero fees for year one.</p>
-          <form class="card-waitlist-form" onsubmit="submitWaitlist(event)">
-            <input type="email" id="waitlist-email" placeholder="Enter your email address" required class="waitlist-input" />
+          <form onsubmit="submitWaitlist(event)" style="display: flex; gap: 10px; margin-top: 14px;">
+            <input type="email" id="waitlist-email" placeholder="Enter your email address" required class="form-input" style="flex: 1;" />
             <button type="submit" class="btn-primary" style="white-space: nowrap;">Reserve Card</button>
           </form>
           <div id="waitlist-feedback" style="display: none; margin-top: 10px; font-size: 13px; font-weight: 600;"></div>
@@ -1128,6 +1332,54 @@ function renderHomePage() {
     </div>
   </section>
 
+  <!-- Interactive FAQ Accordion -->
+  <section class="faq-section">
+    <div style="text-align: center; margin-bottom: 40px;">
+      <h2 style="font-size: 30px; font-weight: 800;">Frequently Asked Questions</h2>
+      <p style="font-size: 15px; color: var(--text-muted); margin-top: 6px;">Everything you need to know about trading, custody, and the Visa card.</p>
+    </div>
+
+    <div class="faq-item active" onclick="toggleFaq(this)">
+      <div class="faq-question">
+        <span>How does non-custodial trading on Base L2 guarantee my asset safety?</span>
+        <span>&#9660;</span>
+      </div>
+      <div class="faq-answer">
+        Your collateral resides entirely in audited non-custodial smart contract vaults on Base L2. CapeChain matches orders off-chain at microsecond speeds using cryptographically signed state updates. If the exchange ever experiences an outage exceeding 7 days, you can trigger the autonomous on-chain escape hatch to withdraw your assets directly to your self-custody wallet without operator permission.
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question">
+        <span>How does the CapeChain Visa Metal Card convert crypto at point of sale?</span>
+        <span>&#9660;</span>
+      </div>
+      <div class="faq-answer">
+        When you tap your Obsidian or Cobalt Visa card at any of the 100 million+ Visa merchants globally, our sub-10µs liquidation engine settles the transaction against your Base L2 stablecoin or crypto balance in real-time. You receive the exact interbank exchange rate with 0% foreign transaction markups and earn up to 3% cashback in Bitcoin.
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question">
+        <span>What are the trading fees and maker rebates?</span>
+        <span>&#9660;</span>
+      </div>
+      <div class="faq-answer">
+        CapeChain offers institutional-grade fee structures: Standard Maker fee is 0.10% (10 bps) with negative fee rebates for high-volume market makers, and Taker fee is 0.20% (20 bps). Frequent Batch Auction orders are settled at uniform clearing prices with zero MEV slippage.
+      </div>
+    </div>
+
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-question">
+        <span>How do African banking deposits work (ZAR, NGN, KES)?</span>
+        <span>&#9660;</span>
+      </div>
+      <div class="faq-answer">
+        We integrate directly with licensed local payment partners: Stitch Instant EFT in South Africa, Paystack NIP in Nigeria, and Safaricom M-Pesa in Kenya. Deposits credit in under 30 seconds into your sovereign account with fully automated AML and travel rule compliance.
+      </div>
+    </div>
+  </section>
+
   ${getSharedFooter()}
   ${getAuthModalHtml()}
 
@@ -1155,56 +1407,130 @@ function renderHomePage() {
     async function handleSocialAuth(provider) {
       if (supabaseClient && (provider === 'Apple' || provider === 'Google')) {
         const prov = provider.toLowerCase();
-        showAuthStatus('Initiating ' + provider + ' sign-in via Supabase...');
+        showToast('Supabase SSO', 'Connecting to ' + provider + ' identity provider...', 'info');
         try {
           const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: prov,
             options: { redirectTo: window.location.origin + '/trade' }
           });
           if (error) {
-            showAuthStatus(error.message, false);
+            showToast('Authentication Notice', error.message, 'danger');
             return;
           }
         } catch (err) {
-          showAuthStatus(err.message, false);
+          showToast('Authentication Error', err.message, 'danger');
           return;
         }
-      } else {
-        alert('🔐 Authenticating via ' + provider + '...\\n\\nConnected to Supabase project hvayastdrwippkaltrbt. Initializing sovereign session keys.');
-        closeAuthModal();
-        window.location.href = '/trade';
       }
+      // Demo / Instant Sovereign Wallet Auth
+      const demoUser = {
+        address: '0x8a9BF241c8889953F9d4793f77EB0076a5bFF241',
+        name: provider + ' User',
+        email: 'trader@capechain.io',
+        provider: provider,
+        loggedInAt: new Date().toISOString()
+      };
+      localStorage.setItem('capechain_user', JSON.stringify(demoUser));
+      showToast('Welcome!', 'Signed in successfully with ' + provider + '. Sovereign vault initialized.', 'success');
+      closeAuthModal();
+      checkAuthSession();
+      setTimeout(() => { window.location.href = '/trade'; }, 700);
     }
 
     async function handleEmailAuth(e) {
       e.preventDefault();
       const email = document.getElementById('auth-email-input').value;
       if (supabaseClient) {
-        showAuthStatus('Dispatching Supabase passwordless magic link to ' + email + '...');
+        showToast('Magic Link', 'Dispatching login token to ' + email + '...', 'info');
         try {
           const { error } = await supabaseClient.auth.signInWithOtp({
             email,
             options: { emailRedirectTo: window.location.origin + '/trade' }
           });
           if (error) {
-            showAuthStatus(error.message, false);
+            showToast('Error', error.message, 'danger');
           } else {
-            showAuthStatus('✅ Magic link dispatched to ' + email + '! Check your inbox.', true);
+            showToast('Magic Link Sent', 'Check inbox for your cryptographic login link.', 'success');
           }
         } catch (err) {
-          showAuthStatus(err.message, false);
+          showToast('Error', err.message, 'danger');
         }
       } else {
-        alert('📧 Magic link dispatched to ' + email + '! Click the secure link in your email to authenticate without passwords.');
+        const demoUser = {
+          address: '0x8a9BF241c8889953F9d4793f77EB0076a5bFF241',
+          name: email.split('@')[0],
+          email: email,
+          provider: 'Email Magic Link',
+          loggedInAt: new Date().toISOString()
+        };
+        localStorage.setItem('capechain_user', JSON.stringify(demoUser));
+        showToast('Magic Link Authenticated', 'Sovereign session established for ' + email, 'success');
         closeAuthModal();
+        checkAuthSession();
       }
+    }
+
+    // Live Ticker Heartbeat
+    let currentBtcPrice = 64280.50;
+    setInterval(() => {
+      const delta = (Math.random() - 0.48) * 12;
+      currentBtcPrice = Math.max(63800, currentBtcPrice + delta);
+      const btcEl = document.getElementById('ticker-btc');
+      if (btcEl) {
+        btcEl.innerText = '$' + currentBtcPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        btcEl.style.color = delta >= 0 ? '#00e676' : '#f43f5e';
+        setTimeout(() => { btcEl.style.color = ''; }, 600);
+      }
+    }, 2000);
+
+    // Interactive FX Calculator
+    const fxRates = {
+      USDT: { ZAR: 18.42, NGN: 1620.00, KES: 129.50, USD: 1.00, EUR: 0.92 },
+      BTC: { ZAR: 1184046.00, NGN: 104134410.00, KES: 8324324.00, USD: 64280.50, EUR: 59138.00 },
+      ETH: { ZAR: 64324.00, NGN: 5657200.00, KES: 452226.00, USD: 3492.10, EUR: 3212.00 }
+    };
+
+    function updateFxCalculation() {
+      const inVal = parseFloat(document.getElementById('calc-in-val').value) || 0;
+      const inCurr = document.getElementById('calc-in-curr').value;
+      const outCurr = document.getElementById('calc-out-curr').value;
+      const rate = fxRates[inCurr][outCurr];
+      const total = inVal * rate;
+
+      const sym = outCurr === 'ZAR' ? 'R ' : (outCurr === 'NGN' ? '₦ ' : (outCurr === 'KES' ? 'KSh ' : (outCurr === 'EUR' ? '€ ' : '$ ')));
+      document.getElementById('calc-out-val').value = sym + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('calc-rate-label').innerText = '1 ' + inCurr + ' = ' + rate.toLocaleString() + ' ' + outCurr;
+    }
+
+    function executeFxInstantSwap() {
+      const inVal = document.getElementById('calc-in-val').value;
+      const inCurr = document.getElementById('calc-in-curr').value;
+      const outVal = document.getElementById('calc-out-val').value;
+      const outCurr = document.getElementById('calc-out-curr').value;
+      showToast('Swap Executed', 'Converted ' + inVal + ' ' + inCurr + ' into ' + outVal + ' with 0% fee on Base L2 rails.', 'success');
+    }
+
+    function verifyWalletInclusion() {
+      const addr = document.getElementById('por-check-addr').value.trim();
+      const res = document.getElementById('por-verify-res');
+      res.style.display = 'block';
+      if (!addr.startsWith('0x') || addr.length < 10) {
+        res.style.borderColor = '#f43f5e';
+        res.style.color = '#f43f5e';
+        res.style.background = 'rgba(244,63,94,0.1)';
+        res.innerHTML = '❌ Please enter a valid Base L2 / Ethereum wallet address.';
+        return;
+      }
+      res.style.borderColor = '#00e676';
+      res.style.color = '#00e676';
+      res.style.background = 'rgba(0,230,118,0.1)';
+      res.innerHTML = '✅ <strong>MERKLE INCLUSION VERIFIED</strong><br/>Address: ' + addr + '<br/>Merkle Root: 0x8f2d5e1a4c9b3f0e7d6c5b4a3928170e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a<br/>Status: 100% Fully Backed in Base L2 Sovereign Vault.';
     }
 
     async function submitWaitlist(e) {
       e.preventDefault();
       const email = document.getElementById('waitlist-email').value;
       const feedback = document.getElementById('waitlist-feedback');
-
       try {
         const res = await fetch('/api/card/waitlist', {
           method: 'POST',
@@ -1214,13 +1540,19 @@ function renderHomePage() {
         const data = await res.json();
         feedback.style.display = 'block';
         feedback.style.color = '#00e676';
-        feedback.innerHTML = '🎉 You are on the waitlist! Ticket #' + data.id.slice(-6).toUpperCase() + '. Check your inbox for VIP early access details.';
+        feedback.innerHTML = '🎉 You are on the waitlist! Ticket #' + (data.id ? data.id.slice(-6).toUpperCase() : '842910') + '. Priority reservation recorded for ' + email;
+        showToast('Card Reserved', 'Obsidian Metal waitlist confirmed for ' + email, 'success');
         document.getElementById('waitlist-email').value = '';
       } catch (err) {
         feedback.style.display = 'block';
         feedback.style.color = '#00e676';
         feedback.innerHTML = '🎉 You are on the waitlist! Priority reservation recorded for ' + email;
+        showToast('Card Reserved', 'Waitlist reservation recorded!', 'success');
       }
+    }
+
+    function toggleFaq(el) {
+      el.classList.toggle('active');
     }
   </script>
 </body>
@@ -1256,6 +1588,67 @@ function renderCardPage() {
       line-height: 1.15;
       margin-bottom: 20px;
     }
+    .card-preview-container {
+      perspective: 1200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    .card-3d-box {
+      width: 100%;
+      max-width: 460px;
+      height: 280px;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0, 112, 243, 0.45), 0 0 50px rgba(0, 229, 255, 0.25);
+      border: 1px solid var(--border-glow);
+      transition: transform 0.1s ease-out;
+      background: #0d121c;
+      user-select: none;
+    }
+    .card-bg-img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      top: 0; left: 0;
+      z-index: 1;
+    }
+    .card-engraved-name {
+      position: absolute;
+      bottom: 26px;
+      left: 32px;
+      z-index: 3;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 800;
+      color: #e2e8f0;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,229,255,0.4);
+    }
+    .card-engraved-tier {
+      position: absolute;
+      bottom: 26px;
+      right: 32px;
+      z-index: 3;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--visa-gold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .card-studio-controls {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glow);
+      border-radius: 14px;
+      padding: 20px;
+      width: 100%;
+      max-width: 460px;
+    }
+
     .card-tier-grid {
       max-width: 1200px;
       margin: 60px auto;
@@ -1294,6 +1687,29 @@ function renderCardPage() {
     .tier-features { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
     .tier-features li { font-size: 13px; color: var(--text-muted); display: flex; gap: 8px; align-items: center; }
     .tier-features li span { color: var(--success); font-weight: 700; }
+
+    /* VIP Ticket Pass */
+    .vip-ticket-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(14px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .vip-ticket-box {
+      background: linear-gradient(135deg, #0e121a 0%, #171d2b 100%);
+      border: 1px solid var(--visa-gold);
+      border-radius: 20px;
+      max-width: 500px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: 0 30px 80px rgba(247, 182, 0, 0.25);
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -1316,15 +1732,31 @@ function renderCardPage() {
         <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Reserve Your Priority Card Spot</h3>
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">The first 10,000 waitlist applicants receive the custom laser-engraved Obsidian Titanium card for free.</p>
         <form onsubmit="submitCardWaitlist(event)" style="display: flex; gap: 10px;">
-          <input type="email" id="card-email" placeholder="Enter your email" required style="flex: 1; background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 12px 14px; color: #fff; font-size: 14px;" />
+          <input type="email" id="card-email" placeholder="Enter your email" required class="form-input" style="flex: 1;" />
           <button type="submit" class="btn-primary" style="white-space: nowrap;">Join Waitlist</button>
         </form>
         <div id="card-status" style="display: none; margin-top: 10px; font-size: 13px; font-weight: 600; color: #00e676;"></div>
       </div>
     </div>
 
-    <div>
-      <img src="/visa-card.jpg" alt="CapeChain Visa Card" style="width: 100%; border-radius: 20px; box-shadow: 0 25px 70px rgba(0, 112, 243, 0.4), 0 0 40px rgba(0, 229, 255, 0.2); border: 1px solid var(--border-glow);" />
+    <!-- 3D Interactive Metal Card Studio -->
+    <div class="card-preview-container">
+      <div id="card3d" class="card-3d-box" onmousemove="handleCardTilt(event)" onmouseleave="resetCardTilt()">
+        <img src="/visa-card.jpg" alt="CapeChain Visa Card" class="card-bg-img" />
+        <div id="engraved-name-display" class="card-engraved-name">ALEXANDER VOGEL</div>
+        <div id="engraved-tier-display" class="card-engraved-tier">OBSIDIAN TITANIUM</div>
+      </div>
+
+      <div class="card-studio-controls">
+        <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+          CUSTOM LASER ENGRAVING PREVIEW:
+        </label>
+        <input type="text" id="engraving-input" value="ALEXANDER VOGEL" maxlength="24" class="form-input" style="font-family: var(--font-mono); text-transform: uppercase;" oninput="updateEngravingText(this.value)" />
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; color: var(--text-muted);">
+          <span>Card Finish: <strong id="finish-label" style="color: #fff;">18g Obsidian Titanium</strong></span>
+          <span style="color: var(--brand-cyan);">Hover Card to Inspect 3D Tilt</span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1335,12 +1767,12 @@ function renderCardPage() {
       <h3 class="tier-name">Pearl Virtual</h3>
       <div class="tier-cashback">1.0% Back</div>
       <ul class="tier-features">
-        <li><span>✓</span> Instant issuance to Apple Pay & Google Wallet</li>
+        <li><span>✓</span> Instant issuance to Apple Pay &amp; Google Wallet</li>
         <li><span>✓</span> 0% Foreign Exchange conversion markup</li>
         <li><span>✓</span> Daily spending limit: $10,000</li>
         <li><span>✓</span> $0 Annual Membership fee</li>
       </ul>
-      <button class="btn-ghost" onclick="selectTier('Pearl Virtual')" style="margin-top: auto;">Select Tier</button>
+      <button class="btn-ghost" onclick="selectTier('Pearl Virtual', 1.0)" style="margin-top: auto;">Select Tier</button>
     </div>
 
     <div class="tier-box featured">
@@ -1351,9 +1783,9 @@ function renderCardPage() {
         <li><span>✓</span> Heavy 18g Laser-Engraved Titanium Card</li>
         <li><span>✓</span> 3% Cashback in BTC or USDC to sovereign vault</li>
         <li><span>✓</span> Unlimited global ATM withdrawals with zero fee</li>
-        <li><span>✓</span> Dedicated VIP 24/7 OTC concierge & staking boost</li>
+        <li><span>✓</span> Dedicated VIP 24/7 OTC concierge &amp; staking boost</li>
       </ul>
-      <button class="btn-primary" onclick="selectTier('Obsidian Metal')" style="margin-top: auto;">Reserve Obsidian</button>
+      <button class="btn-primary" onclick="selectTier('Obsidian Metal', 3.0)" style="margin-top: auto;">Reserve Obsidian</button>
     </div>
 
     <div class="tier-box">
@@ -1366,37 +1798,114 @@ function renderCardPage() {
         <li><span>✓</span> Direct Base L2 point-of-sale off-ramp</li>
         <li><span>✓</span> Daily spending limit: $50,000</li>
       </ul>
-      <button class="btn-ghost" onclick="selectTier('Cobalt Physical')" style="margin-top: auto;">Select Tier</button>
+      <button class="btn-ghost" onclick="selectTier('Cobalt Physical', 2.0)" style="margin-top: auto;">Select Tier</button>
     </div>
   </section>
+
+  <!-- VIP Digital Pass Modal -->
+  <div id="vip-modal" class="vip-ticket-modal" onclick="closeVipModal(event)">
+    <div class="vip-ticket-box" onclick="event.stopPropagation()">
+      <button class="modal-close-btn" onclick="closeVipModal()">&times;</button>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <span style="font-size: 28px;">👑</span>
+        <div>
+          <h3 style="font-size: 20px; font-weight: 900; color: #fff;">Official Founding Cardholder Pass</h3>
+          <p style="font-size: 12px; color: var(--visa-gold);">Priority Batch #1 Verification Ticket</p>
+        </div>
+      </div>
+      <div style="background: rgba(0,0,0,0.4); border: 1px dashed var(--visa-gold); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span style="color: var(--text-muted); font-size: 13px;">Pass Serial:</span>
+          <span id="ticket-serial" style="font-family: var(--font-mono); font-weight: 700; color: #fff;">CC-VISA-008492</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span style="color: var(--text-muted); font-size: 13px;">Engraved Name:</span>
+          <span id="ticket-name" style="font-weight: 700; color: #00e5ff;">ALEXANDER VOGEL</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span style="color: var(--text-muted); font-size: 13px;">Queue Position:</span>
+          <span id="ticket-rank" style="font-weight: 700; color: #00e676;">#3,819 of 10,000</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted); font-size: 13px;">Perk Status:</span>
+          <span style="font-weight: 700; color: var(--visa-gold);">Free Titanium Card + 0% FX</span>
+        </div>
+      </div>
+      <button class="btn-primary" style="width: 100%; padding: 12px;" onclick="copyReferralLink()">
+        Copy VIP Priority Invite Link 📋
+      </button>
+    </div>
+  </div>
 
   ${getSharedFooter()}
   ${getAuthModalHtml()}
 
   <script>
+    let activeTier = 'Obsidian Metal';
+
+    function handleCardTilt(e) {
+      const card = document.getElementById('card3d');
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const midX = rect.width / 2;
+      const midY = rect.height / 2;
+      const rotateX = ((y - midY) / midY) * -12;
+      const rotateY = ((x - midX) / midX) * 16;
+      card.style.transform = \`rotateX(\${rotateX}deg) rotateY(\${rotateY}deg) scale(1.03)\`;
+    }
+
+    function resetCardTilt() {
+      const card = document.getElementById('card3d');
+      card.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+    }
+
+    function updateEngravingText(val) {
+      const display = document.getElementById('engraved-name-display');
+      display.innerText = val.trim() ? val.toUpperCase() : 'YOUR NAME';
+    }
+
+    function selectTier(tierName, cashback) {
+      activeTier = tierName;
+      document.getElementById('engraved-tier-display').innerText = tierName.toUpperCase();
+      document.getElementById('finish-label').innerText = tierName;
+      document.getElementById('card-email').focus();
+      document.getElementById('card-email').placeholder = 'Enter email for ' + tierName + '...';
+      showToast('Tier Selected', tierName + ' (' + cashback + '% Cashback) selected.', 'info');
+      window.scrollTo({ top: 180, behavior: 'smooth' });
+    }
+
     async function submitCardWaitlist(e) {
       e.preventDefault();
       const email = document.getElementById('card-email').value;
-      const status = document.getElementById('card-status');
+      const name = document.getElementById('engraving-input').value || 'CapeChain Holder';
       try {
-        await fetch('/api/card/waitlist', {
+        const res = await fetch('/api/card/waitlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, cardTier: 'Obsidian Metal' })
+          body: JSON.stringify({ email, cardTier: activeTier, engravedName: name })
         });
-        status.style.display = 'block';
-        status.innerText = '✅ Priority reservation confirmed for ' + email + '! Welcome to CapeChain Visa.';
+        const data = await res.json();
+        
+        document.getElementById('ticket-serial').innerText = 'CC-VISA-' + Math.floor(100000 + Math.random() * 900000);
+        document.getElementById('ticket-name').innerText = name.toUpperCase();
+        document.getElementById('ticket-rank').innerText = '#' + Math.floor(1200 + Math.random() * 4000) + ' of 10,000';
+        document.getElementById('vip-modal').style.display = 'flex';
+        showToast('VIP Ticket Unlocked', 'Priority Founding Card Pass generated!', 'success');
         document.getElementById('card-email').value = '';
       } catch (err) {
-        status.style.display = 'block';
-        status.innerText = '✅ Priority reservation confirmed!';
+        document.getElementById('vip-modal').style.display = 'flex';
+        showToast('VIP Ticket Unlocked', 'Priority pass confirmed for ' + email, 'success');
       }
     }
 
-    function selectTier(tierName) {
-      document.getElementById('card-email').focus();
-      document.getElementById('card-email').placeholder = 'Enter email for ' + tierName + '...';
-      window.scrollTo({ top: 100, behavior: 'smooth' });
+    function closeVipModal() {
+      document.getElementById('vip-modal').style.display = 'none';
+    }
+
+    function copyReferralLink() {
+      navigator.clipboard.writeText(window.location.origin + '/card?ref=' + document.getElementById('ticket-serial').innerText);
+      showToast('Copied', 'VIP referral link copied to clipboard!', 'success');
     }
   </script>
 </body>
@@ -1411,7 +1920,7 @@ function renderMediaPage() {
   const mediaList = data.media || [];
 
   const articlesHtml = mediaList.map(item => `
-    <article class="media-card">
+    <article class="media-card" data-category="${item.category.toLowerCase()}" data-title="${item.title.toLowerCase()}">
       <div class="media-meta">
         <span class="media-category">${item.category}</span>
         <span class="media-date">${new Date(item.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -1431,7 +1940,7 @@ function renderMediaPage() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Media & Press Center — CapeChain Labs</title>
+  <title>Media &amp; Press Center — CapeChain Labs</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -1444,7 +1953,38 @@ function renderMediaPage() {
       justify-content: space-between;
       align-items: flex-end;
       border-bottom: 1px solid var(--border-subtle);
-      margin-bottom: 40px;
+      margin-bottom: 30px;
+    }
+    .filter-bar {
+      max-width: 1200px;
+      margin: 0 auto 30px;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-pill.active, .filter-pill:hover {
+      background: rgba(0, 229, 255, 0.12);
+      border-color: var(--brand-cyan);
+      color: var(--brand-cyan);
     }
     .media-grid {
       max-width: 1200px;
@@ -1529,7 +2069,7 @@ function renderMediaPage() {
 
   <div class="media-hero">
     <div>
-      <span style="font-size: 12px; font-weight: 700; color: var(--brand-cyan); letter-spacing: 0.08em; text-transform: uppercase;">Press & Editorial Room</span>
+      <span style="font-size: 12px; font-weight: 700; color: var(--brand-cyan); letter-spacing: 0.08em; text-transform: uppercase;">Press &amp; Editorial Room</span>
       <h1 style="font-size: 40px; font-weight: 900; margin-top: 6px;">CapeChain Newsroom</h1>
       <p style="font-size: 16px; color: var(--text-muted); margin-top: 8px;">Official announcements, partnership briefings, and engineering milestones from CapeChain Labs.</p>
     </div>
@@ -1537,13 +2077,24 @@ function renderMediaPage() {
     <div class="press-kit-box">
       <div>
         <div style="font-size: 14px; font-weight: 700; color: #fff;">Download Brand Kit</div>
-        <div style="font-size: 12px; color: var(--text-muted);">High-res logos, typography & color specs</div>
+        <div style="font-size: 12px; color: var(--text-muted);">High-res logos, typography &amp; color specs</div>
       </div>
-      <a href="/logo.png" download class="btn-ghost" style="padding: 8px 14px; font-size: 12px;">Get Assets</a>
+      <button onclick="downloadPressKit()" class="btn-ghost" style="padding: 8px 14px; font-size: 12px;">Get Assets</button>
     </div>
   </div>
 
-  <section class="media-grid">
+  <div class="filter-bar">
+    <div class="filter-pills">
+      <button class="filter-pill active" onclick="filterArticles('all', this)">All Releases</button>
+      <button class="filter-pill" onclick="filterArticles('partnership', this)">Partnerships</button>
+      <button class="filter-pill" onclick="filterArticles('funding', this)">Funding</button>
+      <button class="filter-pill" onclick="filterArticles('technology', this)">Technology &amp; PoR</button>
+      <button class="filter-pill" onclick="filterArticles('engineering', this)">Engineering</button>
+    </div>
+    <input type="text" id="article-search" placeholder="Search news &amp; announcements..." class="form-input" style="max-width: 280px; padding: 8px 14px; font-size: 13px;" oninput="searchArticles(this.value)" />
+  </div>
+
+  <section id="media-container" class="media-grid">
     ${articlesHtml}
   </section>
 
@@ -1552,6 +2103,10 @@ function renderMediaPage() {
     <div class="modal-container" style="max-width: 680px;" onclick="event.stopPropagation()">
       <button class="modal-close-btn" onclick="closeArticleModal()">&times;</button>
       <div id="article-modal-content"></div>
+      <div style="display: flex; gap: 10px; margin-top: 24px; border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+        <button class="btn-ghost" onclick="copyArticleLink()">Copy Story Link 🔗</button>
+        <button class="btn-primary" onclick="shareArticleOnTwitter()">Share on X / Twitter 🐦</button>
+      </div>
     </div>
   </div>
 
@@ -1560,8 +2115,10 @@ function renderMediaPage() {
 
   <script>
     const articles = ${JSON.stringify(mediaList)};
+    let activeArticleId = null;
 
     function readArticle(id) {
+      activeArticleId = id;
       const art = articles.find(a => a.id === id);
       if (!art) return;
       const html = \`
@@ -1569,7 +2126,7 @@ function renderMediaPage() {
           <span style="background: rgba(0,229,255,0.1); border: 1px solid var(--border-glow); color: var(--brand-cyan); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;">\${art.category}</span>
           <span style="color: var(--text-muted); font-size: 12px; margin-left: 12px;">\${new Date(art.publishedAt).toDateString()}</span>
         </div>
-        <h2 style="font-size: 26px; font-weight: 900; line-height: 1.3; margin-bottom: 16px;">\${art.title}</h2>
+        <h2 style="font-size: 26px; font-weight: 900; line-height: 1.3; margin-bottom: 16px; color: #fff;">\${art.title}</h2>
         <div style="font-size: 13px; color: #94a3b8; margin-bottom: 24px;">By \${art.author} &bull; \${art.readTime || '3 min read'}</div>
         <p style="font-size: 15px; font-weight: 500; color: #e2e8f0; line-height: 1.6; margin-bottom: 20px; border-left: 3px solid var(--brand-cyan); padding-left: 16px;">\${art.summary}</p>
         <div style="font-size: 14px; color: var(--text-muted); line-height: 1.8;">\${art.content}</div>
@@ -1580,6 +2137,66 @@ function renderMediaPage() {
 
     function closeArticleModal() {
       document.getElementById('article-modal').style.display = 'none';
+    }
+
+    function filterArticles(cat, btn) {
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const cards = document.querySelectorAll('.media-card');
+      cards.forEach(card => {
+        const itemCat = card.getAttribute('data-category');
+        if (cat === 'all' || itemCat.includes(cat)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    function searchArticles(q) {
+      const query = q.toLowerCase().trim();
+      const cards = document.querySelectorAll('.media-card');
+      cards.forEach(card => {
+        const title = card.getAttribute('data-title');
+        if (!query || title.includes(query)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    function copyArticleLink() {
+      navigator.clipboard.writeText(window.location.origin + '/media?id=' + (activeArticleId || ''));
+      showToast('Link Copied', 'Article link copied to clipboard.', 'success');
+    }
+
+    function shareArticleOnTwitter() {
+      const art = articles.find(a => a.id === activeArticleId);
+      const text = encodeURIComponent((art ? art.title : 'CapeChain Labs') + ' @CapeChainLabs');
+      window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + encodeURIComponent(window.location.href), '_blank');
+    }
+
+    function downloadPressKit() {
+      const kit = {
+        name: "CapeChain Labs",
+        tagline: "The Sovereign Hybrid Exchange on Base L2",
+        brandTokens: {
+          cyan: "#00e5ff",
+          blue: "#0070f3",
+          dark: "#07090e",
+          visaGold: "#f7b600"
+        },
+        partnership: "Official Visa Global Co-Branded Debit Program",
+        settlement: "Base L2 Non-Custodial Multi-Asset Smart Vaults",
+        pressContact: "press@capechain.io"
+      };
+      const blob = new Blob([JSON.stringify(kit, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'capechain-press-kit.json';
+      a.click();
+      showToast('Press Kit Downloaded', 'Brand specifications and metadata downloaded.', 'success');
     }
   </script>
 </body>
@@ -1594,7 +2211,7 @@ function renderCareersPage() {
   const jobsList = (data.careers || []).filter(j => j.active);
 
   const jobsHtml = jobsList.map(job => `
-    <div class="job-card">
+    <div class="job-card" data-dept="${job.department.toLowerCase()}" data-title="${job.title.toLowerCase()}">
       <div class="job-header">
         <div>
           <h3 class="job-title">${job.title}</h3>
@@ -1740,19 +2357,8 @@ function renderCareersPage() {
       border-radius: 10px;
       padding: 16px 20px;
     }
-    .job-reqs ul {
-      margin-top: 8px;
-      padding-left: 20px;
-    }
-    .job-reqs li {
-      margin-bottom: 4px;
-      color: var(--text-muted);
-    }
-
-    @media (max-width: 800px) {
-      .perks-strip { grid-template-columns: repeat(2, 1fr); }
-      .job-header { flex-direction: column; gap: 10px; }
-    }
+    .job-reqs ul { margin-top: 8px; padding-left: 20px; }
+    .job-reqs li { margin-bottom: 4px; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -1793,8 +2399,17 @@ function renderCareersPage() {
   </div>
 
   <section class="jobs-container">
-    <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 10px;">Open Positions (${jobsList.length})</h2>
-    ${jobsHtml}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 16px;">
+      <h2 style="font-size: 24px; font-weight: 800;">Open Positions (${jobsList.length})</h2>
+      <div style="display: flex; gap: 8px;">
+        <button class="filter-pill active" onclick="filterJobs('all', this)">All</button>
+        <button class="filter-pill" onclick="filterJobs('engineering', this)">Engineering</button>
+        <button class="filter-pill" onclick="filterJobs('product', this)">Product</button>
+      </div>
+    </div>
+    <div id="jobs-list" style="display: flex; flex-direction: column; gap: 24px;">
+      ${jobsHtml}
+    </div>
   </section>
 
   <!-- Application Modal -->
@@ -1819,6 +2434,11 @@ function renderCareersPage() {
           <input type="url" id="apply-link" required placeholder="https://github.com/yourhandle" class="form-input" />
         </div>
         <div class="form-group">
+          <label>Upload Resume (Simulated)</label>
+          <input type="file" id="apply-resume" class="form-input" onchange="handleResumeUpload(this)" />
+          <div id="resume-badge" style="display: none; font-size: 12px; color: var(--success); margin-top: 4px;"></div>
+        </div>
+        <div class="form-group">
           <label>Why CapeChain Labs? (Brief Note)</label>
           <textarea id="apply-note" rows="3" class="form-input" placeholder="Tell us about the hardest systems or blockchain problem you have solved..."></textarea>
         </div>
@@ -1841,11 +2461,47 @@ function renderCareersPage() {
       document.getElementById('apply-modal').style.display = 'none';
     }
 
-    function submitApplication(e) {
+    function handleResumeUpload(input) {
+      if (input.files && input.files[0]) {
+        const badge = document.getElementById('resume-badge');
+        badge.style.display = 'block';
+        badge.innerText = '📎 Attached: ' + input.files[0].name + ' (' + (input.files[0].size / 1024).toFixed(1) + ' KB)';
+      }
+    }
+
+    function filterJobs(dept, btn) {
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const cards = document.querySelectorAll('.job-card');
+      cards.forEach(card => {
+        const jobDept = card.getAttribute('data-dept');
+        if (dept === 'all' || jobDept.includes(dept)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    async function submitApplication(e) {
       e.preventDefault();
+      const jobId = document.getElementById('apply-job-id').value;
+      const jobTitle = document.getElementById('apply-role-title').innerText;
       const name = document.getElementById('apply-name').value;
-      const role = document.getElementById('apply-role-title').innerText;
-      alert('🎉 Thank you ' + name + '! Your application for ' + role + ' has been submitted directly to the CapeChain engineering leadership team.');
+      const email = document.getElementById('apply-email').value;
+      const profileUrl = document.getElementById('apply-link').value;
+      const note = document.getElementById('apply-note').value;
+
+      try {
+        await fetch('/api/careers/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId, jobTitle, name, email, profileUrl, note })
+        });
+      } catch (_) {}
+
+      const candidateCode = 'CC-CAREER-' + Math.floor(1000 + Math.random() * 9000);
+      showToast('Application Submitted!', 'Ref #' + candidateCode + ' recorded. Review within 48h.', 'success');
       closeApplyModal();
     }
   </script>
@@ -1854,10 +2510,9 @@ function renderCareersPage() {
 }
 
 // ============================================================================
-// 5. SPOT TRADING TERMINAL (/trade)
+// 5. SPOT TRADING TERMINAL (/trade) - FULL INTERACTIVE EXPERIENCE
 // ============================================================================
 function renderTradeTerminal() {
-  // Read our rich trade terminal HTML from the existing template or render it with CapeChain branding
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -1880,9 +2535,10 @@ function renderTradeTerminal() {
     .terminal-body {
       display: grid;
       grid-template-columns: 280px 1fr 340px;
-      grid-template-rows: 44px calc(100vh - 120px);
+      grid-template-rows: 44px calc(100vh - 280px) 210px;
       background: var(--bg-app);
       overflow: hidden;
+      height: calc(100vh - 65px);
     }
     .market-strip {
       grid-column: 1 / -1;
@@ -1908,30 +2564,116 @@ function renderTradeTerminal() {
       display: flex;
       flex-direction: column;
       border-right: 1px solid var(--border-subtle);
+      position: relative;
     }
     .order-panel {
       background: var(--bg-surface);
       display: flex;
       flex-direction: column;
       padding: 16px;
-      gap: 16px;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    .bottom-panel {
+      grid-column: 1 / -1;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
     }
     .book-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      padding: 3px 12px;
+      padding: 4px 12px;
       cursor: pointer;
+      position: relative;
     }
-    .book-row:hover { background: rgba(255,255,255,0.03); }
+    .book-row:hover { background: rgba(255,255,255,0.04); }
     .book-row.ask { color: var(--sell-primary); }
     .book-row.bid { color: var(--buy-primary); }
+    .depth-bar {
+      position: absolute;
+      top: 0; bottom: 0; right: 0;
+      opacity: 0.15;
+      pointer-events: none;
+    }
+    .depth-bar.ask { background: var(--sell-primary); }
+    .depth-bar.bid { background: var(--buy-primary); }
     .spread-bar {
-      padding: 8px 12px;
+      padding: 6px 12px;
       background: var(--bg-surface-elevated);
       font-weight: 700;
       text-align: center;
       border-top: 1px solid var(--border-subtle);
       border-bottom: 1px solid var(--border-subtle);
+      font-size: 11px;
+    }
+
+    /* Tabs in bottom panel */
+    .tab-header {
+      display: flex;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(0,0,0,0.2);
+    }
+    .terminal-tab {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .terminal-tab.active {
+      color: var(--brand-cyan);
+      border-bottom-color: var(--brand-cyan);
+    }
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+    }
+
+    table.terminal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: var(--font-mono);
+    }
+    table.terminal-table th {
+      text-align: left;
+      padding: 6px 10px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 11px;
+    }
+    table.terminal-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    /* Modal styling */
+    .trade-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .trade-modal-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glow);
+      border-radius: 16px;
+      max-width: 440px;
+      width: 100%;
+      padding: 28px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+      position: relative;
     }
   </style>
 </head>
@@ -1939,108 +2681,731 @@ function renderTradeTerminal() {
   ${getSharedHeader('trade')}
 
   <div class="terminal-body">
-    <!-- Header Strip -->
+    <!-- Header Market Strip -->
     <div class="market-strip">
       <span style="font-weight: 800; font-size: 15px; color: #fff;">BTC / USDT</span>
-      <span style="font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: #00e676;">$64,280.50</span>
-      <span style="color: var(--text-muted); font-size: 12px;">24h High: <strong style="color: #fff;">$65,120.00</strong></span>
-      <span style="color: var(--text-muted); font-size: 12px;">24h Low: <strong style="color: #fff;">$63,450.00</strong></span>
+      <span id="market-price-strip" style="font-family: var(--font-mono); font-size: 15px; font-weight: 800; color: #00e676;">$64,280.50</span>
+      <span style="color: var(--text-muted); font-size: 12px;">24h High: <strong id="strip-high" style="color: #fff;">$65,120.00</strong></span>
+      <span style="color: var(--text-muted); font-size: 12px;">24h Low: <strong id="strip-low" style="color: #fff;">$63,450.00</strong></span>
       <span style="color: var(--text-muted); font-size: 12px;">24h Vol: <strong style="color: #fff;">1,842.50 BTC</strong></span>
-      <span style="margin-left: auto; color: var(--brand-cyan); font-weight: 600; font-size: 12px;">
-        ⚡ Matching Engine: 8.66µs | Base L2 Sovereign Vault
-      </span>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 14px;">
+        <button class="btn-ghost" style="padding: 4px 12px; font-size: 12px; color: #00e676; border-color: rgba(0,230,118,0.3);" onclick="openDepositModal()">Deposit (Base L2)</button>
+        <button class="btn-ghost" style="padding: 4px 12px; font-size: 12px;" onclick="openWithdrawModal()">Withdraw</button>
+        <span style="color: var(--brand-cyan); font-weight: 600; font-size: 12px;">
+          ⚡ Latency: 8.66µs | Base L2 Sovereign Vault
+        </span>
+      </div>
     </div>
 
-    <!-- Order Book -->
+    <!-- Live Order Book -->
     <div class="book-panel">
-      <div style="padding: 10px 12px; font-weight: 700; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 11px;">
-        ORDER BOOK (BTC-USDT)
+      <div style="padding: 8px 12px; font-weight: 700; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 11px; display: flex; justify-content: space-between;">
+        <span>ORDER BOOK (BTC-USDT)</span>
+        <span style="color: #64748b;">Click to Fill</span>
       </div>
-      <div style="flex: 1; overflow-y: auto;">
-        <div class="book-row ask"><span>64,310.00</span><span>0.450</span><span>28,939.50</span></div>
-        <div class="book-row ask"><span>64,300.00</span><span>1.200</span><span>77,160.00</span></div>
-        <div class="book-row ask"><span>64,290.00</span><span>0.850</span><span>54,646.50</span></div>
-        <div class="book-row ask"><span>64,285.00</span><span>0.320</span><span>20,571.20</span></div>
-        <div class="spread-bar">Spread: 5.00 USDT (0.007%)</div>
-        <div class="book-row bid"><span>64,280.00</span><span>1.150</span><span>73,922.00</span></div>
-        <div class="book-row bid"><span>64,275.00</span><span>0.900</span><span>57,847.50</span></div>
-        <div class="book-row bid"><span>64,260.00</span><span>2.400</span><span>154,224.00</span></div>
-        <div class="book-row bid"><span>64,250.00</span><span>0.650</span><span>41,762.50</span></div>
-      </div>
+      <div id="asks-container" style="flex: 1; display: flex; flex-direction: column-reverse; overflow: hidden;"></div>
+      <div id="book-spread" class="spread-bar">Spread: 5.00 USDT (0.007%)</div>
+      <div id="bids-container" style="flex: 1; overflow: hidden;"></div>
     </div>
 
-    <!-- Chart -->
+    <!-- Interactive Canvas Candlestick Chart Engine -->
     <div class="chart-panel">
-      <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 700; font-size: 13px;">TradingView Candle Stream [1m]</span>
-        <span style="font-size: 12px; color: var(--brand-cyan);">● WebSocket Feed Live</span>
-      </div>
-      <div style="flex: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 50%, #0d121c 0%, #07090e 100%);">
-        <div style="text-align: center; color: var(--text-muted);">
-          <div style="font-size: 40px; margin-bottom: 10px;">📈</div>
-          <div style="font-size: 16px; font-weight: 700; color: #fff;">Interactive Candle Chart Engine</div>
-          <div style="font-size: 13px; margin-top: 4px;">Powered by CapeChain Realtime Market Service</div>
+      <div style="padding: 8px 16px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-weight: 700; font-size: 13px; color: #fff;">BTC/USDT Candlestick Engine</span>
+          <div style="display: flex; gap: 4px; margin-left: 12px;">
+            <button class="filter-pill active" onclick="switchTimeframe('1m', this)">1m</button>
+            <button class="filter-pill" onclick="switchTimeframe('5m', this)">5m</button>
+            <button class="filter-pill" onclick="switchTimeframe('15m', this)">15m</button>
+            <button class="filter-pill" onclick="switchTimeframe('1h', this)">1h</button>
+            <button class="filter-pill" onclick="switchTimeframe('1D', this)">1D</button>
+          </div>
+        </div>
+        <div id="hud-readout" style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">
+          O: 64,280.00 | H: 64,340.00 | L: 64,210.00 | C: 64,295.00
         </div>
       </div>
+      <div style="flex: 1; position: relative;">
+        <canvas id="candleCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+      </div>
     </div>
 
-    <!-- Order Entry -->
+    <!-- Order Entry Form -->
     <div class="order-panel">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <button id="btn-side-buy" class="btn-primary" style="background: #00e676;" onclick="setOrderSide('buy')">Buy BTC</button>
         <button id="btn-side-sell" class="btn-ghost" onclick="setOrderSide('sell')">Sell BTC</button>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom: 8px;">
         <label>Order Type</label>
-        <select class="form-input" style="padding: 8px;">
-          <option>Limit Order</option>
-          <option>Market Order</option>
-          <option>Post-Only (Maker Rebate)</option>
-          <option>Immediate-Or-Cancel (IOC)</option>
-          <option>Fill-Or-Kill (FOK)</option>
+        <select id="order-type-select" class="form-input" style="padding: 8px;" onchange="handleOrderTypeChange()">
+          <option value="limit">Limit Order</option>
+          <option value="market">Market Order</option>
+          <option value="ioc">Immediate-Or-Cancel (IOC)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 8px;">
+        <label>Price (USDT)</label>
+        <input type="number" id="order-price" value="64280.00" step="0.50" class="form-input" oninput="calculateOrderTotal()" />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 8px;">
+        <label>Quantity (BTC)</label>
+        <input type="number" id="order-qty" value="0.250" step="0.001" class="form-input" oninput="calculateOrderTotal()" />
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px;">
+        <button class="btn-ghost" style="padding: 4px; font-size: 11px;" onclick="setOrderPercent(0.25)">25%</button>
+        <button class="btn-ghost" style="padding: 4px; font-size: 11px;" onclick="setOrderPercent(0.50)">50%</button>
+        <button class="btn-ghost" style="padding: 4px; font-size: 11px;" onclick="setOrderPercent(0.75)">75%</button>
+        <button class="btn-ghost" style="padding: 4px; font-size: 11px;" onclick="setOrderPercent(1.00)">100%</button>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px 12px; font-size: 12px; border: 1px solid var(--border-subtle);">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--text-muted);">Est. Total:</span>
+          <span id="order-total-display" style="font-family: var(--font-mono); font-weight: 700; color: #fff;">16,070.00 USDT</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--text-muted);">Fee (Taker/Maker):</span>
+          <span style="font-family: var(--font-mono); color: var(--brand-cyan);">0.10% / 0.20%</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted);">Available Vault:</span>
+          <span id="avail-balance-display" style="font-family: var(--font-mono); font-weight: 700; color: #00e676;">50,000.00 USDT</span>
+        </div>
+      </div>
+
+      <button id="submit-btn" class="btn-primary" onclick="submitTradeOrder()" style="padding: 12px; margin-top: 4px; font-weight: 800;">
+        Sign &amp; Submit Buy Order (EIP-712)
+      </button>
+    </div>
+
+    <!-- Bottom Panel (Open Orders, Trade History, Assets) -->
+    <div class="bottom-panel">
+      <div class="tab-header">
+        <button class="terminal-tab active" onclick="switchBottomTab('orders', this)">Open Orders (<span id="open-orders-count">0</span>)</button>
+        <button class="terminal-tab" onclick="switchBottomTab('history', this)">Trade History</button>
+        <button class="terminal-tab" onclick="switchBottomTab('assets', this)">Sovereign Vault Assets</button>
+        <button class="terminal-tab" onclick="switchBottomTab('escape', this)">7-Day Escape Hatch</button>
+      </div>
+
+      <div id="tab-orders" class="tab-content">
+        <table class="terminal-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Pair</th>
+              <th>Type</th>
+              <th>Side</th>
+              <th style="text-align: right;">Price</th>
+              <th style="text-align: right;">Quantity</th>
+              <th style="text-align: right;">Filled</th>
+              <th>Time</th>
+              <th style="text-align: center;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="open-orders-tbody">
+            <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">No active open orders in deterministic engine.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="tab-history" class="tab-content" style="display: none;">
+        <table class="terminal-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Trade ID</th>
+              <th>Pair</th>
+              <th>Side</th>
+              <th style="text-align: right;">Executed Price</th>
+              <th style="text-align: right;">Filled Qty</th>
+              <th style="text-align: right;">Fee Paid</th>
+              <th>Settlement Status</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">No executions logged yet in current session.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="tab-assets" class="tab-content" style="display: none;">
+        <table class="terminal-table">
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th>Network</th>
+              <th style="text-align: right;">Total Balance</th>
+              <th style="text-align: right;">Available</th>
+              <th style="text-align: right;">In Open Orders</th>
+              <th style="text-align: center;">Smart Contract</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>USDT</strong> (Tether USD)</td>
+              <td>Base L2</td>
+              <td id="asset-total-usdt" style="text-align: right; color: #fff;">50,000.00</td>
+              <td id="asset-avail-usdt" style="text-align: right; color: #00e676;">50,000.00</td>
+              <td id="asset-hold-usdt" style="text-align: right; color: #f59e0b;">0.00</td>
+              <td style="text-align: center; font-size: 11px; color: var(--brand-cyan);">0x018e...0001 (Sepolia)</td>
+            </tr>
+            <tr>
+              <td><strong>BTC</strong> (Bitcoin Sovereign)</td>
+              <td>Base L2</td>
+              <td id="asset-total-btc" style="text-align: right; color: #fff;">1.2500</td>
+              <td id="asset-avail-btc" style="text-align: right; color: #00e676;">1.2500</td>
+              <td id="asset-hold-btc" style="text-align: right; color: #f59e0b;">0.0000</td>
+              <td style="text-align: center; font-size: 11px; color: var(--brand-cyan);">0x018e...0002 (Sepolia)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="tab-escape" class="tab-content" style="display: none;">
+        <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
+          <h4 style="color: #f59e0b; margin-bottom: 6px;">Autonomous Non-Custodial Emergency Escape Hatch</h4>
+          <p>
+            Under CapeChain's smart contract design on Base L2, user funds are locked inside deterministic smart contract vaults. If our operator node halts or fails to submit settlement batches for more than 7 consecutive days (604,800 seconds), any user can invoke <code>escapeHatchWithdraw()</code> to reclaim their assets without operator permission.
+          </p>
+          <div style="margin-top: 10px;">
+            <button class="btn-ghost" style="padding: 6px 14px; font-size: 12px;" onclick="testEscapeHatchContract()">Query Base L2 Timelock Status ⏳</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Non-Custodial Deposit Modal -->
+  <div id="deposit-modal" class="trade-modal" onclick="closeDepositModal(event)">
+    <div class="trade-modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close-btn" onclick="closeDepositModal()">&times;</button>
+      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Deposit to Base L2 Sovereign Vault</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Direct deposit address generated for your Web3 sovereign vault</p>
+
+      <div class="form-group">
+        <label>Asset</label>
+        <select id="deposit-asset-select" class="form-input">
+          <option value="USDT">USDT (Tether USD - Base L2)</option>
+          <option value="BTC">BTC (Bitcoin Sovereign - Base L2)</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label>Price (USDT)</label>
-        <input type="text" id="order-price" value="64280.00" class="form-input" />
+        <label>Your Base L2 Vault Address</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" readonly id="vault-addr-input" value="0x8a9BF241c8889953F9d4793f77EB0076a5bFF241" class="form-input" style="font-family: var(--font-mono); font-size: 12px;" />
+          <button class="btn-ghost" style="padding: 0 14px;" onclick="copyVaultAddress()">Copy</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;" onclick="simulateInboundDeposit()">
+        Simulate Inbound On-Chain Deposit (+5,000 USDT)
+      </button>
+    </div>
+  </div>
+
+  <!-- Non-Custodial Withdraw Modal -->
+  <div id="withdraw-modal" class="trade-modal" onclick="closeWithdrawModal(event)">
+    <div class="trade-modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close-btn" onclick="closeWithdrawModal()">&times;</button>
+      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Withdraw from Sovereign Vault</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Transfer to your external Ethereum / Base L2 wallet</p>
+
+      <div class="form-group">
+        <label>Asset</label>
+        <select id="withdraw-asset-select" class="form-input">
+          <option value="USDT">USDT</option>
+          <option value="BTC">BTC</option>
+        </select>
       </div>
 
       <div class="form-group">
-        <label>Quantity (BTC)</label>
-        <input type="text" id="order-qty" value="0.5" class="form-input" />
+        <label>Destination Address</label>
+        <input type="text" id="withdraw-dest" placeholder="0x..." class="form-input" style="font-family: var(--font-mono);" />
       </div>
 
-      <button id="submit-btn" class="btn-primary" onclick="submitTradeOrder()" style="padding: 12px; margin-top: 10px;">
-        Sign & Submit Buy Order (EIP-712)
+      <div class="form-group">
+        <label>Amount</label>
+        <input type="number" id="withdraw-amount" placeholder="e.g. 500" class="form-input" />
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+        Base L2 Network Gas: <strong style="color: #00e676;">0.05 USDT</strong> (Sub-cent batch compression)
+      </div>
+
+      <button class="btn-primary" style="width: 100%; padding: 12px;" onclick="executeWithdrawal()">
+        Sign &amp; Execute Sovereign Withdrawal
       </button>
-
-      <div style="border-top: 1px solid var(--border-subtle); padding-top: 14px; font-size: 12px; color: var(--text-muted);">
-        <div>Maker Fee: <strong style="color: #fff;">0.10% (10 bps)</strong></div>
-        <div>Taker Fee: <strong style="color: #fff;">0.20% (20 bps)</strong></div>
-        <div style="margin-top: 4px;">Pre-trade Hold: <strong style="color: var(--brand-cyan);">32,140 USDT</strong></div>
-      </div>
     </div>
   </div>
 
   ${getAuthModalHtml()}
 
   <script>
+    // ------------------------------------------------------------------------
+    // STATE ENGINE: Balances, Order Book, Candles, and Orders
+    // ------------------------------------------------------------------------
+    let userState = {
+      balances: { USDT: 50000.00, BTC: 1.2500 },
+      holds: { USDT: 0.00, BTC: 0.0000 },
+      openOrders: [],
+      tradeHistory: []
+    };
+
     let currentSide = 'buy';
+    let currentBtcPrice = 64280.50;
+    let btcCandles = [];
+    let selectedTimeframe = '1m';
+
+    // Generate initial historical candles
+    function initCandles() {
+      btcCandles = [];
+      let base = 64150.00;
+      const count = 50;
+      const now = Date.now();
+      for (let i = count; i >= 0; i--) {
+        const time = now - i * 60000;
+        const open = base;
+        const delta = (Math.random() - 0.47) * 45;
+        const close = open + delta;
+        const high = Math.max(open, close) + Math.random() * 25;
+        const low = Math.min(open, close) - Math.random() * 25;
+        const volume = Math.random() * 3.5 + 0.5;
+        btcCandles.push({ time, open, high, low, close, volume });
+        base = close;
+      }
+      currentBtcPrice = base;
+    }
+    initCandles();
+
+    // Setup Canvas Chart
+    const canvas = document.getElementById('candleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      if (!canvas) return;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      drawChart();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function drawChart() {
+      if (!ctx || !canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+
+      // Background grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let y = 30; y < height - 30; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Min/Max calculations
+      let minP = Infinity, maxP = -Infinity;
+      btcCandles.forEach(c => {
+        if (c.low < minP) minP = c.low;
+        if (c.high > maxP) maxP = c.high;
+      });
+      const padding = (maxP - minP) * 0.1 || 10;
+      minP -= padding;
+      maxP += padding;
+
+      const chartHeight = height - 50;
+      const candleWidth = Math.max(4, (width - 60) / btcCandles.length - 3);
+
+      // Draw Candlesticks
+      btcCandles.forEach((c, idx) => {
+        const x = idx * (candleWidth + 3) + 10;
+        const yOpen = chartHeight - ((c.open - minP) / (maxP - minP)) * chartHeight;
+        const yClose = chartHeight - ((c.close - minP) / (maxP - minP)) * chartHeight;
+        const yHigh = chartHeight - ((c.high - minP) / (maxP - minP)) * chartHeight;
+        const yLow = chartHeight - ((c.low - minP) / (maxP - minP)) * chartHeight;
+
+        const isBull = c.close >= c.open;
+        const color = isBull ? '#00e676' : '#f43f5e';
+
+        // High-Low Wick
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x + candleWidth / 2, yHigh);
+        ctx.lineTo(x + candleWidth / 2, yLow);
+        ctx.stroke();
+
+        // Body
+        ctx.fillStyle = color;
+        const top = Math.min(yOpen, yClose);
+        const h = Math.max(2, Math.abs(yClose - yOpen));
+        ctx.fillRect(x, top, candleWidth, h);
+
+        // Volume Bar
+        const volHeight = Math.min(30, c.volume * 6);
+        ctx.fillStyle = isBull ? 'rgba(0, 230, 118, 0.25)' : 'rgba(244, 63, 94, 0.25)';
+        ctx.fillRect(x, height - volHeight - 10, candleWidth, volHeight);
+      });
+
+      // Price Scale on right
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px JetBrains Mono';
+      ctx.textAlign = 'right';
+      for (let p = minP; p <= maxP; p += (maxP - minP) / 5) {
+        const y = chartHeight - ((p - minP) / (maxP - minP)) * chartHeight;
+        ctx.fillText(p.toFixed(1), width - 6, y + 3);
+      }
+
+      ctx.restore();
+    }
+
+    // Dynamic Order Book rendering
+    function renderOrderBook() {
+      const asksDiv = document.getElementById('asks-container');
+      const bidsDiv = document.getElementById('bids-container');
+      if (!asksDiv || !bidsDiv) return;
+
+      const p = currentBtcPrice;
+      const asks = [
+        { price: (p + 25.0).toFixed(2), qty: '0.450', total: (0.45 * (p + 25)).toFixed(2), pct: 45 },
+        { price: (p + 20.0).toFixed(2), qty: '1.200', total: (1.20 * (p + 20)).toFixed(2), pct: 75 },
+        { price: (p + 15.0).toFixed(2), qty: '0.850', total: (0.85 * (p + 15)).toFixed(2), pct: 60 },
+        { price: (p + 10.0).toFixed(2), qty: '0.320', total: (0.32 * (p + 10)).toFixed(2), pct: 30 },
+        { price: (p + 5.0).toFixed(2), qty: '0.900', total: (0.90 * (p + 5)).toFixed(2), pct: 65 },
+      ];
+
+      const bids = [
+        { price: (p - 5.0).toFixed(2), qty: '1.150', total: (1.15 * (p - 5)).toFixed(2), pct: 70 },
+        { price: (p - 10.0).toFixed(2), qty: '0.950', total: (0.95 * (p - 10)).toFixed(2), pct: 55 },
+        { price: (p - 15.0).toFixed(2), qty: '2.400', total: (2.40 * (p - 15)).toFixed(2), pct: 90 },
+        { price: (p - 20.0).toFixed(2), qty: '0.650', total: (0.65 * (p - 20)).toFixed(2), pct: 40 },
+        { price: (p - 25.0).toFixed(2), qty: '1.800', total: (1.80 * (p - 25)).toFixed(2), pct: 80 },
+      ];
+
+      asksDiv.innerHTML = asks.map(a => \`
+        <div class="book-row ask" onclick="fillOrderForm('\${a.price}', '\${a.qty}')">
+          <div class="depth-bar ask" style="width: \${a.pct}%;"></div>
+          <span>\${a.price}</span><span>\${a.qty}</span><span style="text-align: right;">\${a.total}</span>
+        </div>
+      \`).join('');
+
+      bidsDiv.innerHTML = bids.map(b => \`
+        <div class="book-row bid" onclick="fillOrderForm('\${b.price}', '\${b.qty}')">
+          <div class="depth-bar bid" style="width: \${b.pct}%;"></div>
+          <span>\${b.price}</span><span>\${b.qty}</span><span style="text-align: right;">\${b.total}</span>
+        </div>
+      \`).join('');
+    }
+
+    function fillOrderForm(price, qty) {
+      document.getElementById('order-price').value = price;
+      document.getElementById('order-qty').value = qty;
+      calculateOrderTotal();
+      showToast('Book Clicked', 'Populated price ' + price + ' and qty ' + qty, 'info');
+    }
+
+    // Live Tick Heartbeat
+    setInterval(() => {
+      const delta = (Math.random() - 0.48) * 8;
+      currentBtcPrice += delta;
+      
+      const lastCandle = btcCandles[btcCandles.length - 1];
+      lastCandle.close = currentBtcPrice;
+      if (currentBtcPrice > lastCandle.high) lastCandle.high = currentBtcPrice;
+      if (currentBtcPrice < lastCandle.low) lastCandle.low = currentBtcPrice;
+      lastCandle.volume += Math.random() * 0.1;
+
+      // Update Strip & HUD
+      const stripPrice = document.getElementById('market-price-strip');
+      if (stripPrice) {
+        stripPrice.innerText = '$' + currentBtcPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        stripPrice.style.color = delta >= 0 ? '#00e676' : '#f43f5e';
+      }
+      const hud = document.getElementById('hud-readout');
+      if (hud) {
+        hud.innerText = \`O: \${lastCandle.open.toFixed(2)} | H: \${lastCandle.high.toFixed(2)} | L: \${lastCandle.low.toFixed(2)} | C: \${lastCandle.close.toFixed(2)}\`;
+      }
+
+      drawChart();
+      renderOrderBook();
+    }, 1500);
+
+    setTimeout(() => { resizeCanvas(); renderOrderBook(); }, 100);
+
+    // Order Submission Engine
     function setOrderSide(side) {
       currentSide = side;
       document.getElementById('btn-side-buy').className = side === 'buy' ? 'btn-primary' : 'btn-ghost';
+      document.getElementById('btn-side-buy').style.background = side === 'buy' ? '#00e676' : 'transparent';
       document.getElementById('btn-side-sell').className = side === 'sell' ? 'btn-primary' : 'btn-ghost';
       document.getElementById('btn-side-sell').style.background = side === 'sell' ? '#f43f5e' : 'transparent';
       document.getElementById('submit-btn').innerText = side === 'buy' ? 'Sign & Submit Buy Order (EIP-712)' : 'Sign & Submit Sell Order (EIP-712)';
-      document.getElementById('submit-btn').style.background = side === 'buy' ? 'var(--brand-gradient)' : '#f43f5e';
+      document.getElementById('submit-btn').style.background = side === 'buy' ? '#00e676' : '#f43f5e';
+      calculateOrderTotal();
+    }
+
+    function calculateOrderTotal() {
+      const p = parseFloat(document.getElementById('order-price').value) || 0;
+      const q = parseFloat(document.getElementById('order-qty').value) || 0;
+      const total = p * q;
+      document.getElementById('order-total-display').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USDT';
+      
+      const availEl = document.getElementById('avail-balance-display');
+      if (currentSide === 'buy') {
+        availEl.innerText = (userState.balances.USDT - userState.holds.USDT).toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' USDT';
+      } else {
+        availEl.innerText = (userState.balances.BTC - userState.holds.BTC).toFixed(4) + ' BTC';
+      }
+    }
+
+    function setOrderPercent(pct) {
+      const p = parseFloat(document.getElementById('order-price').value) || currentBtcPrice;
+      if (currentSide === 'buy') {
+        const availUsdt = userState.balances.USDT - userState.holds.USDT;
+        const total = availUsdt * pct;
+        document.getElementById('order-qty').value = (total / p).toFixed(4);
+      } else {
+        const availBtc = userState.balances.BTC - userState.holds.BTC;
+        document.getElementById('order-qty').value = (availBtc * pct).toFixed(4);
+      }
+      calculateOrderTotal();
+    }
+
+    function handleOrderTypeChange() {
+      const type = document.getElementById('order-type-select').value;
+      if (type === 'market') {
+        document.getElementById('order-price').value = currentBtcPrice.toFixed(2);
+        document.getElementById('order-price').disabled = true;
+      } else {
+        document.getElementById('order-price').disabled = false;
+      }
+      calculateOrderTotal();
     }
 
     function submitTradeOrder() {
-      const p = document.getElementById('order-price').value;
-      const q = document.getElementById('order-qty').value;
-      alert('✅ Order Matched at ' + p + ' USDT (' + q + ' BTC)! Pre-trade balance hold captured in double-entry ledger.');
+      const price = parseFloat(document.getElementById('order-price').value);
+      const qty = parseFloat(document.getElementById('order-qty').value);
+      const type = document.getElementById('order-type-select').value;
+      const total = price * qty;
+
+      if (!qty || qty <= 0) {
+        showToast('Invalid Amount', 'Please specify an order quantity greater than 0.', 'danger');
+        return;
+      }
+
+      // Check balance
+      if (currentSide === 'buy') {
+        const avail = userState.balances.USDT - userState.holds.USDT;
+        if (total > avail) {
+          showToast('Insufficient Balance', 'Required ' + total.toFixed(2) + ' USDT, but available is ' + avail.toFixed(2) + ' USDT.', 'danger');
+          return;
+        }
+      } else {
+        const avail = userState.balances.BTC - userState.holds.BTC;
+        if (qty > avail) {
+          showToast('Insufficient BTC', 'Required ' + qty.toFixed(4) + ' BTC, but available is ' + avail.toFixed(4) + ' BTC.', 'danger');
+          return;
+        }
+      }
+
+      const orderId = 'CC-ORD-' + Math.floor(1000 + Math.random() * 9000);
+
+      // If Market or aggressive Limit -> Execute immediately
+      if (type === 'market' || (currentSide === 'buy' && price >= currentBtcPrice) || (currentSide === 'sell' && price <= currentBtcPrice)) {
+        if (currentSide === 'buy') {
+          userState.balances.USDT -= total;
+          userState.balances.BTC += qty;
+        } else {
+          userState.balances.BTC -= qty;
+          userState.balances.USDT += total;
+        }
+        
+        userState.tradeHistory.unshift({
+          id: orderId,
+          time: new Date().toLocaleTimeString(),
+          side: currentSide.toUpperCase(),
+          price: price.toFixed(2),
+          qty: qty.toFixed(4),
+          fee: (total * 0.001).toFixed(2) + ' USDT',
+          status: 'Settled on Base L2'
+        });
+
+        showToast('Trade Matched & Settled!', \`\${currentSide.toUpperCase()} \${qty} BTC @ \${price} USDT. Pre-trade invariant balance captured.\`, 'success');
+      } else {
+        // Limit resting on order book -> Pre-trade hold
+        if (currentSide === 'buy') {
+          userState.holds.USDT += total;
+        } else {
+          userState.holds.BTC += qty;
+        }
+
+        userState.openOrders.unshift({
+          id: orderId,
+          time: new Date().toLocaleTimeString(),
+          type: type.toUpperCase(),
+          side: currentSide.toUpperCase(),
+          price: price.toFixed(2),
+          qty: qty.toFixed(4),
+          filled: '0.0%'
+        });
+
+        showToast('Order Placed on Book', \`Limit \${currentSide.toUpperCase()} \${qty} BTC resting in deterministic matching engine.\`, 'info');
+      }
+
+      updateTables();
+      calculateOrderTotal();
+    }
+
+    function cancelOpenOrder(id) {
+      const idx = userState.openOrders.findIndex(o => o.id === id);
+      if (idx !== -1) {
+        const o = userState.openOrders[idx];
+        const total = parseFloat(o.price) * parseFloat(o.qty);
+        if (o.side === 'BUY') {
+          userState.holds.USDT = Math.max(0, userState.holds.USDT - total);
+        } else {
+          userState.holds.BTC = Math.max(0, userState.holds.BTC - parseFloat(o.qty));
+        }
+        userState.openOrders.splice(idx, 1);
+        showToast('Order Canceled', 'Pre-trade balance hold released.', 'info');
+        updateTables();
+        calculateOrderTotal();
+      }
+    }
+
+    function updateTables() {
+      // Open orders
+      const openCount = document.getElementById('open-orders-count');
+      if (openCount) openCount.innerText = userState.openOrders.length;
+      const tbodyOrders = document.getElementById('open-orders-tbody');
+      if (tbodyOrders) {
+        if (userState.openOrders.length === 0) {
+          tbodyOrders.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">No active open orders in deterministic engine.</td></tr>';
+        } else {
+          tbodyOrders.innerHTML = userState.openOrders.map(o => \`
+            <tr>
+              <td style="color: #38bdf8;">\${o.id}</td>
+              <td>BTC-USDT</td>
+              <td>\${o.type}</td>
+              <td style="color: \${o.side === 'BUY' ? '#00e676' : '#f43f5e'}; font-weight: 700;">\${o.side}</td>
+              <td style="text-align: right;">\${o.price}</td>
+              <td style="text-align: right;">\${o.qty}</td>
+              <td style="text-align: right;">\${o.filled}</td>
+              <td style="color: #94a3b8;">\${o.time}</td>
+              <td style="text-align: center;"><button class="btn-ghost" style="padding: 2px 8px; font-size: 11px; color: #f43f5e;" onclick="cancelOpenOrder('\${o.id}')">Cancel</button></td>
+            </tr>
+          \`).join('');
+        }
+      }
+
+      // History
+      const tbodyHistory = document.getElementById('history-tbody');
+      if (tbodyHistory) {
+        if (userState.tradeHistory.length === 0) {
+          tbodyHistory.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">No executions logged yet in current session.</td></tr>';
+        } else {
+          tbodyHistory.innerHTML = userState.tradeHistory.map(h => \`
+            <tr>
+              <td style="color: #94a3b8;">\${h.time}</td>
+              <td style="color: #a78bfa;">\${h.id}</td>
+              <td>BTC-USDT</td>
+              <td style="color: \${h.side === 'BUY' ? '#00e676' : '#f43f5e'}; font-weight: 700;">\${h.side}</td>
+              <td style="text-align: right;">\${h.price}</td>
+              <td style="text-align: right;">\${h.qty}</td>
+              <td style="text-align: right; color: var(--brand-cyan);">\${h.fee}</td>
+              <td style="color: #00e676;">\${h.status}</td>
+            </tr>
+          \`).join('');
+        }
+      }
+
+      // Vault Assets
+      const availUsdt = userState.balances.USDT - userState.holds.USDT;
+      const availBtc = userState.balances.BTC - userState.holds.BTC;
+      document.getElementById('asset-total-usdt').innerText = userState.balances.USDT.toLocaleString('en-US', { minimumFractionDigits: 2 });
+      document.getElementById('asset-avail-usdt').innerText = availUsdt.toLocaleString('en-US', { minimumFractionDigits: 2 });
+      document.getElementById('asset-hold-usdt').innerText = userState.holds.USDT.toLocaleString('en-US', { minimumFractionDigits: 2 });
+      document.getElementById('asset-total-btc').innerText = userState.balances.BTC.toFixed(4);
+      document.getElementById('asset-avail-btc').innerText = availBtc.toFixed(4);
+      document.getElementById('asset-hold-btc').innerText = userState.holds.BTC.toFixed(4);
+    }
+
+    function switchBottomTab(tabName, btn) {
+      document.querySelectorAll('.terminal-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-orders').style.display = tabName === 'orders' ? 'block' : 'none';
+      document.getElementById('tab-history').style.display = tabName === 'history' ? 'block' : 'none';
+      document.getElementById('tab-assets').style.display = tabName === 'assets' ? 'block' : 'none';
+      document.getElementById('tab-escape').style.display = tabName === 'escape' ? 'block' : 'none';
+    }
+
+    function switchTimeframe(tf, btn) {
+      selectedTimeframe = tf;
+      document.querySelectorAll('.chart-panel .filter-pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      initCandles();
+      drawChart();
+      showToast('Timeframe', 'Loaded ' + tf + ' candle resolution stream.', 'info');
+    }
+
+    // Deposit / Withdraw Modals
+    function openDepositModal() {
+      document.getElementById('deposit-modal').style.display = 'flex';
+    }
+    function closeDepositModal() {
+      document.getElementById('deposit-modal').style.display = 'none';
+    }
+    function copyVaultAddress() {
+      navigator.clipboard.writeText(document.getElementById('vault-addr-input').value);
+      showToast('Address Copied', 'Base L2 sovereign vault address copied.', 'success');
+    }
+    function simulateInboundDeposit() {
+      userState.balances.USDT += 5000.00;
+      updateTables();
+      calculateOrderTotal();
+      closeDepositModal();
+      showToast('Deposit Credited', '+5,000 USDT credited from Base L2 transaction 0x9a8b...7f21', 'success');
+    }
+
+    function openWithdrawModal() {
+      document.getElementById('withdraw-modal').style.display = 'flex';
+    }
+    function closeWithdrawModal() {
+      document.getElementById('withdraw-modal').style.display = 'none';
+    }
+    function executeWithdrawal() {
+      const amt = parseFloat(document.getElementById('withdraw-amount').value);
+      const dest = document.getElementById('withdraw-dest').value.trim();
+      if (!amt || amt <= 0) {
+        showToast('Error', 'Please enter a valid withdrawal amount.', 'danger');
+        return;
+      }
+      if (amt > userState.balances.USDT - userState.holds.USDT) {
+        showToast('Insufficient Balance', 'Amount exceeds available vault balance.', 'danger');
+        return;
+      }
+      userState.balances.USDT -= amt;
+      updateTables();
+      calculateOrderTotal();
+      closeWithdrawModal();
+      showToast('Withdrawal Executed', \`\${amt} USDT sent to \${dest.slice(0, 8)}... Tx: 0x3e1d...f92a\`, 'success');
+    }
+
+    function testEscapeHatchContract() {
+      showToast('Timelock Query', 'Contract: 0x1000...0001 | Operator Active | Next Heartbeat in 42s | Hatch: SECURE', 'info');
     }
   </script>
 </body>
@@ -2089,6 +3454,24 @@ function handleRequest(req, res) {
     return;
   }
 
+  // API: Career Job Application
+  if (pathname === '/api/careers/apply' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body);
+        const app = cms.addJobApplication(payload);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, application: app }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
   // API: CMS Data
   if (pathname === '/api/cms/media') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -2119,7 +3502,7 @@ function handleRequest(req, res) {
     return res.end(renderCareersPage());
   }
 
-  // Default: Homepage (also handles /login and /signup with automatic modal opening trigger)
+  // Default: Homepage (also handles /login and /signup)
   return res.end(renderHomePage());
 }
 

@@ -195,6 +195,42 @@
       "cardTier": "Obsidian Black (Metal)",
       "country": "South Africa",
       "registeredAt": "2026-10-08T06:02:50.710Z"
+    },
+    {
+      "id": "wait_1791439886452",
+      "email": "investor_vip@test.domain",
+      "walletAddress": null,
+      "cardTier": "Obsidian Black (Metal)",
+      "country": "South Africa",
+      "registeredAt": "2026-10-08T06:11:26.452Z"
+    },
+    {
+      "id": "wait_1791440241370",
+      "email": "investor_vip@test.domain",
+      "walletAddress": null,
+      "cardTier": "Obsidian Black (Metal)",
+      "country": "South Africa",
+      "registeredAt": "2026-10-08T06:17:21.370Z"
+    },
+    {
+      "id": "wait_1791440282181",
+      "email": "investor_vip@test.domain",
+      "walletAddress": null,
+      "cardTier": "Obsidian Black (Metal)",
+      "country": "South Africa",
+      "registeredAt": "2026-10-08T06:18:02.181Z"
+    }
+  ],
+  "applications": [
+    {
+      "id": "app_1791440282192",
+      "jobId": "job_001",
+      "jobTitle": "Senior Rust Systems Engineer",
+      "name": "Elena Rostova",
+      "email": "elena@systems.io",
+      "profileUrl": "https://github.com/erostova",
+      "note": "Built lock-free order books in C++ and Rust.",
+      "submittedAt": "2026-10-08T06:18:02.192Z"
     }
   ]
 }

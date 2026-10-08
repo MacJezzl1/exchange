@@ -94,6 +94,24 @@ function joinCardWaitlist(entry) {
   return waitlistEntry;
 }
 
+function addJobApplication(app) {
+  const data = getCmsData();
+  const application = {
+    id: 'app_' + Date.now(),
+    jobId: app.jobId,
+    jobTitle: app.jobTitle,
+    name: app.name,
+    email: app.email,
+    profileUrl: app.profileUrl,
+    note: app.note || '',
+    submittedAt: new Date().toISOString(),
+  };
+  if (!data.applications) data.applications = [];
+  data.applications.unshift(application);
+  saveCmsData(data);
+  return application;
+}
+
 module.exports = {
   getCmsData,
   saveCmsData,
@@ -102,4 +120,6 @@ module.exports = {
   addCareerOpening,
   deleteCareerOpening,
   joinCardWaitlist,
+  addJobApplication,
 };
+

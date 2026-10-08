@@ -132,4 +132,47 @@ describe('Phase 7: CapeChain Labs Branding, Visa Card & CMS Verification', () =>
     expect(vercelConfig.rewrites).toBeDefined();
     expect(vercelConfig.rewrites.length).toBeGreaterThan(0);
   });
+
+  it('validates interactive candlestick canvas engine and order book realism in trading terminal', () => {
+    const webServerPath = path.join(__dirname, '..', 'apps', 'web', 'server.js');
+    const content = fs.readFileSync(webServerPath, 'utf8');
+
+    // Canvas Candlestick Engine
+    expect(content).toContain('candleCanvas');
+    expect(content).toContain('drawChart');
+    expect(content).toContain('initCandles');
+    expect(content).toContain('submitTradeOrder');
+    expect(content).toContain('openDepositModal');
+    expect(content).toContain('openWithdrawModal');
+    expect(content).toContain('calculateOrderTotal');
+
+    // FX Calculator & Proof of Reserves
+    expect(content).toContain('updateFxCalculation');
+    expect(content).toContain('executeFxInstantSwap');
+    expect(content).toContain('verifyWalletInclusion');
+
+    // 3D Metal Card Studio
+    expect(content).toContain('card-3d-box');
+    expect(content).toContain('updateEngravingText');
+  });
+
+  it('records career candidate job applications via CMS', () => {
+    const app = cms.addJobApplication({
+      jobId: 'job_001',
+      jobTitle: 'Senior Rust Systems Engineer',
+      name: 'Elena Rostova',
+      email: 'elena@systems.io',
+      profileUrl: 'https://github.com/erostova',
+      note: 'Built lock-free order books in C++ and Rust.',
+    });
+
+    expect(app.id).toMatch(/^app_/);
+    expect(app.name).toBe('Elena Rostova');
+
+    const data = cms.getCmsData();
+    const found = data.applications.find((a: any) => a.id === app.id);
+    expect(found).toBeDefined();
+    expect(found.email).toBe('elena@systems.io');
+  });
 });
+
